@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartShot - دستیار استودیوی هوشمند عکاسی محصول</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Vazirmatn Font -->
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+  
+  <!-- React & ReactDOM (Production) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel for JSX in-browser compilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+    }
+    .scrollbar-none::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-none {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    // Built-in reliable SVGs wrapped safely in <g> to guarantee zero JSX parsing conflicts
+    const Icon = ({ name, className = "w-4 h-4" }) => {
+      const icons = {
+        camera: <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>,
+        sparkles: <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>,
+        image: <g><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></g>,
+        download: <g><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></g>,
+        copy: <g><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></g>,
+        refresh: <g><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></g>,
+        trash: <g><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></g>,
+        eye: <g><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></g>,
+        globe: <g><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></g>,
+        sliders: <g><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></g>,
+        close: <g><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></g>,
+        plus: <g><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></g>,
+        rotate: <g><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></g>,
+        search: <g><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></g>,
+        lightbulb: <g><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></g>,
+        tag: <g><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></g>,
+        info: <g><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></g>,
+        checkCircle: <g><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></g>,
+        check: <polyline points="20 6 9 17 4 12"/>,
+        ratio: <g><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></g>,
+        scale: <g><polygon points="12 2 15 8 9 8 12 2"/><rect x="11" y="8" width="2" height="14"/><path d="M5 14h14"/></g>
+      };
+
+      return (
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          className={className}
+        >
+          {icons[name] || icons.sparkles}
+        </svg>
+      );
+    };
+
+    const CATEGORIZED_GALLERY = [
+      {
+        id: 'general_studio',
+        category: '۱. سبک‌های عمومی و استودیویی (General & Studio Styles)',
+        icon: '📸',
+        options: [
+          { id: 'minimalist', name: 'مینیمالیست (Minimalist)', desc: 'پس‌زمینه‌های ساده، تمیز و تمرکز کامل روی محصول.' },
+          { id: 'ecommerce_white_bg', name: 'پس‌زمینه سفید ای-کامرس (E-commerce White Background)', desc: 'عکس استاندارد محصول با پس‌زمینه کاملاً سفید و خالص، مناسب برای فروشگاه‌های آنلاین.' },
+          { id: 'cinematic', name: 'سینمایی (Cinematic)', desc: 'نورپردازی دراماتیک، رنگ‌های سینمایی و حسی داستانی.' },
+          { id: 'bright_airy', name: 'روشن و لطیف (Bright & Airy)', desc: 'فضایی روشن، پر از نور طبیعی و رنگ‌های ملایم برای حسی لطیف.' },
+          { id: 'vintage_nostalgic', name: 'وینتیج/نوستالژیک (Vintage/Nostalgic)', desc: 'استفاده از رنگ‌ها و بافت‌های قدیمی برای ایجاد حس نوستالژی.' },
+          { id: 'symmetry_repetition', name: 'تقارن و تکرار (Symmetry & Repetition)', desc: 'چیدمان متقارن محصول یا استفاده از تکرار برای ایجاد یک الگوی بصری جذاب.' },
+          { id: 'textured_bg', name: 'پس‌زمینه بافت‌دار (Textured Background)', desc: 'استفاده از پس‌زمینه‌هایی با بافت‌های مشخص مانند پارچه، چوب یا سنگ برای افزودن عمق به تصویر.' },
+          { id: 'hero_shot', name: 'نمای قهرمانانه (Hero Shot)', desc: 'یک نمای دراماتیک و از زاویه پایین که محصول را قدرتمند نشان می‌دهد.' },
+          { id: 'levitation', name: 'عکاسی معلق (Levitation Photography)', desc: 'نمایش محصول در حالتی معلق و بی‌وزن برای ایجاد حسی سورئال و جادویی.' },
+          { id: 'rustic', name: 'روستیک (Rustic)', desc: 'فضایی با حس و حال روستایی، استفاده از چوب طبیعی، بافت‌های خشن و رنگ‌های گرم.' },
+          { id: 'knolling', name: 'عکاسی کنولینگ (Knolling Photography)', desc: 'چیدمان منظم و سازمان‌یافته اشیاء به صورت موازی یا با زاویه ۹۰ درجه از نمای بالا.' },
+          { id: 'visual_storytelling', name: 'داستان‌سرایی بصری (Visual Storytelling)', desc: 'چیدمان و آرایش و استایلینگ با هدف داستان سرایی بصری و انتقال یک پیام.' },
+          { id: 'product_grouping', name: 'گروه‌بندی محصولات (Product Grouping)', desc: 'نمایش چند محصول مرتبط در کنار هم برای نشان دادن یک مجموعه یا تنوع محصولات.' },
+          { id: 'colored_studio', name: 'استودیو با پس‌زمینه رنگی (Studio with Colored Background)', desc: 'عکاسی استودیویی با استفاده از پس‌زمینه‌های رنگی شاد یا هماهنگ با محصول.' },
+          { id: 'silhouette', name: 'ضد نور (Silhouette)', desc: 'نمایش محصول به صورت یک سایه تیره در مقابل یک پس‌زمینه روشن، با تاکید بر فرم و شکل.' },
+          { id: 'flatlay', name: 'چیدمان تخت (Flat Lay)', desc: 'چیدمان اشیاء به صورت صاف روی یک سطح از نمای بالا.' },
+          { id: 'industrial_catalog', name: 'صنعتی و کاتالوگی (Industrial & Catalog)', desc: 'یک شات تمیز و صنعتی مناسب برای کاتالوگ محصولات.' },
+          { id: 'dreamy_romantic', name: 'رویاگونه و رمانتیک (Dreamy & Romantic)', desc: 'سبکی لطیف، مینیمال و رمانتیک با نورپردازی نرم و رنگ‌های ملایم.' },
+          { id: 'traditional', name: 'سنتی (Traditional)', desc: 'استفاده از عناصر و چیدمان سنتی برای ایجاد حسی کلاسیک و اصیل.' },
+          { id: 'scandinavian_hygge', name: 'اسکاندیناوی و هایگ (Scandinavian & Hygge)', desc: 'فضایی روشن، مینیمال، دنج و کاربردی با چوب‌های روشن و رنگ‌های خنثی.' },
+          { id: 'industrial_photo', name: 'عکاسی صنعتی (Industrial Photography)', desc: 'یک شات تمیز و صنعتی مناسب برای نمایش محصولات صنعتی.' },
+          { id: 'classical_luxury', name: 'سبک کلاسیک/لوکس (Classical/Luxury Style)', desc: 'سبکی با شکوه و مجلل با استفاده از عناصر کلاسیک.' },
+          { id: 'env_storytelling', name: 'کادربندی با محیط (Environmental Storytelling)', desc: 'استفاده از عناصر محیطی برای ایجاد یک قاب طبیعی دور محصول و داستان‌سرایی.' },
+          { id: 'action_style', name: 'سبک اکشن (Action Style)', desc: 'یک شات اکشن و پویا از محصول برای نمایش عملکرد و هیجان.' },
+        ]
+      },
+      {
+        id: 'action_dynamic',
+        category: '۲. اکشن و پویا (Action & Dynamic)',
+        icon: '⚡',
+        options: [
+          { id: 'product_in_motion', name: 'محصول در حرکت (Product in Motion)', desc: 'نمایش محصول در حال حرکت یا استفاده برای ایجاد حس پویایی.' },
+          { id: 'liquid_splash', name: 'افکت پاشش مایع (Liquid Splash Effect)', desc: 'نمایش محصول با پاشش مایعات مانند آب یا رنگ برای ایجاد حس تازگی.' },
+          { id: 'liquid_colorful_splash', name: 'عکاسی پاشش مایع رنگی (Liquid Colorful Splash Photography)', desc: 'نمایش محصول با پاشش مایعات رنگارنگ برای ایجاد حس تازگی و پویایی.' },
+          { id: 'colored_liquids_smoke', name: 'مایعات رنگی و دود (Colored Liquids & Smoke)', desc: 'ایجاد صحنه‌های خلاقانه با استفاده از ترکیب دود و مایعات رنگی در اطراف محصول.' },
+          { id: 'light_trails', name: 'رد نور (Light Trails)', desc: 'استفاده از نوردهی طولانی برای ثبت مسیر حرکت نورها و ایجاد ردهای نورانی پویا در صحنه.' },
+          { id: 'powder_explosion', name: 'انفجار پودر (Powder Explosion)', desc: 'پرتاب پودرهای رنگی به سمت محصول برای ایجاد یک انفجار رنگی و پویا.' },
+          { id: 'high_speed_freeze', name: 'فریز کردن حرکت سریع (High-Speed Freeze Motion)', desc: 'عکاسی با سرعت شاتر بسیار بالا برای ثبت یک لحظه بسیار سریع.' },
+          { id: 'fire_flames', name: 'آتش و شعله (Fire & Flames)', desc: 'استفاده از آتش یا شعله‌های کنترل‌شده در اطراف محصول برای ایجاد حسی قدرتمند.' },
+          { id: 'smoke_fog', name: 'دود و مه (Smoke & Fog)', desc: 'استفاده از دود یا مه برای ایجاد فضایی دراماتیک و مرموز.' },
+          { id: 'water_droplets', name: 'قطرات آب روی محصول (Water Droplets on Product)', desc: 'نمایش محصول با قطرات آب برای القای حس تازگی و طراوت.' },
+          { id: 'surface_break', name: 'محصول در حال شکستن سطح (Product Breaking Through a Surface)', desc: 'نمایش محصول در حال شکستن یک سطح مانند شیشه یا دیوار برای ایجاد حسی از قدرت و تاثیرگذاری.' },
+          { id: 'zero_gravity', name: 'شات محصول در بی‌وزنی (Zero Gravity Product Shot)', desc: 'محصول و اکسسوری‌های مرتبط به صورت معلق در حالت بی‌وزنی برای ایجاد یک صحنه سورئال و فناورانه.' },
+          { id: 'light_streaks', name: 'محصول با ردهای نوری (Product with Light Streaks)', desc: 'ایجاد ردهای نوری سریع و پویا در اطراف محصول برای القای حس سرعت و تکنولوژی.' },
+          { id: 'energetic_field', name: 'محصول در میدان انرژی (Product in an Energetic Field)', desc: 'محصول در مرکز یک میدان انرژی بصری، مانند جرقه‌ها یا امواج نورانی، قرار گرفته است.' },
+        ]
+      },
+      {
+        id: 'apparel',
+        category: '۳. پوشاک (Apparel)',
+        icon: '👗',
+        options: [
+          { id: 'on_model_studio', name: 'روی مدل - استودیو (On Model - Studio)', desc: 'نمایش لباس بر تن مدل در یک محیط استودیویی کنترل‌شده با پس‌زمینه‌های ساده یا رنگی.' },
+          { id: 'on_model_lifestyle', name: 'روی مدل - لایف استایل (On Model - Lifestyle)', desc: 'نمایش لباس بر تن مدل در یک محیط واقعی و روزمره مانند خیابان، کافه یا خانه.' },
+          { id: 'apparel_flatlay', name: 'چیدمان تخت لباس (Apparel Flat Lay)', desc: 'چیدمان لباس به صورت صاف روی یک سطح از نمای بالا.' },
+          { id: 'accessorized_flatlay', name: 'چیدمان تخت با اکسسوری (Accessorized Flat Lay)', desc: 'چیدمان فلت لی با هدف داستان سرایی بصری و انتقال یک پیام.' },
+          { id: 'storytelling_flatlay', name: 'فلت لی داستان‌سرا (Visual storytelling flat lay)', desc: 'چیدمان و آرایش و استایلینگ فلت لی با هدف داستان سرایی بصری و انتقال یک پیام.' },
+          { id: 'invisible_mannequin', name: 'مانکن نامرئی (Invisible Mannequin)', desc: 'نمایش لباس به صورت سه‌بعدی بدون دیده شدن مدل یا مانکن.' },
+          { id: 'fabric_details', name: 'جزئیات نزدیک پارچه و دوخت (Close-up Fabric & Stitching Details)', desc: 'تمرکز بر روی جزئیات پارچه، دوخت و دکمه‌ها.' },
+          { id: 'street_style', name: 'استایل خیابانی (Street Style)', desc: 'عکاسی از مدل با محصول در محیط شهری و خیابانی.' },
+          { id: 'fashion_editorial', name: 'ادیتوریال فشن (Fashion Editorial)', desc: 'سبک مجلات مد، با ژست‌های اغراق‌شده، نورپردازی دراماتیک و فضایی هنری.' },
+          { id: 'sporty_athletic', name: 'اسپرت و ورزشی (Sporty & Athletic)', desc: 'نمایش لباس‌های ورزشی در محیط باشگاه یا در حال حرکت و فعالیت.' },
+          { id: 'folded_stacked', name: 'تا شده و روی هم (Folded & Stacked)', desc: 'نمایش لباس‌ها به صورت مرتب تا شده و روی هم چیده شده برای تاکید بر تنوع.' },
+          { id: 'avant_garde', name: 'فشن آوانگارد (Avant-Garde Fashion)', desc: 'سبکی هنری، غیرمتعارف و خلاقانه با تاکید بر فرم‌های اغراق‌شده و مفاهیم نو.' },
+          { id: 'casual_comfy', name: 'کژوال و راحتی (Casual & Comfy)', desc: 'نمایش لباس‌های راحتی در یک فضای دنج و آرام مانند خانه.' },
+          { id: 'formal_evening', name: 'استایل رسمی و شب (Formal & Evening Wear)', desc: 'نمایش لباس‌های رسمی و مجلسی در یک محیط لوکس و شیک.' },
+          { id: 'activewear_motion', name: 'پوشاک ورزشی در حال حرکت (Activewear in Motion)', desc: 'عکاسی از مدل در حال انجام حرکات ورزشی برای نمایش عملکرد لباس.' },
+          { id: 'layered_style', name: 'استایل لایه لایه (Layered Style)', desc: 'نمایش چندین لایه لباس روی هم برای ایجاد یک استایل پیچیده و جذاب.' },
+          { id: 'denim_on_denim', name: 'ست سرتاپا جین (Denim on Denim)', desc: 'استایلی که در آن از چندین آیتم جین به صورت همزمان استفاده می‌شود.' },
+          { id: 'monochromatic_style', name: 'استایل تک‌رنگ (Monochromatic Style)', desc: 'استایلی که تمام اجزای آن از یک رنگ یا طیف‌های مختلف همان رنگ تشکیل شده است.' },
+          { id: 'pattern_mixing', name: 'ترکیب طرح و پترن (Pattern Mixing)', desc: 'ترکیب خلاقانه دو یا چند پارچه با طرح‌های مختلف در یک استایل.' },
+          { id: 'beachwear', name: 'لباس ساحلی (Beachwear)', desc: 'نمایش لباس‌های ساحلی و مایو در کنار دریا، استخر یا فضاهای استوایی.' },
+          { id: 'festival_fashion', name: 'مد فستیوال (Festival Fashion)', desc: 'استایل‌های شاد، رنگارنگ و بوهو مناسب برای فستیوال‌های موسیقی و هنری.' },
+          { id: 'outdoor_hiking', name: 'پوشاک طبیعت‌گردی (Outdoor & Hiking Apparel)', desc: 'نمایش لباس و تجهیزات کوهنوردی و طبیعت‌گردی در محیط‌های طبیعی.' },
+          { id: 'backstage_fashion', name: 'پشت صحنه فشن شو (Fashion Show Backstage)', desc: 'فضایی شلوغ و پویا از آماده شدن مدل‌ها در پشت صحنه یک نمایش مد.' },
+          { id: 'sustainable_fashion', name: 'مد پایدار و ارگانیک (Sustainable & Organic Fashion)', desc: 'نمایش لباس‌های ساخته شده از مواد پایدار و طبیعی در یک محیط ارگانیک و سبز.' },
+          { id: 'modern_office', name: 'استایل اداری مدرن (Modern Office Style)', desc: 'استایل‌های شیک و مدرن برای محیط کار و جلسات رسمی.' },
+          { id: 'fashion_pet', name: 'فشن همراه با حیوان خانگی (Fashion with a Pet)', desc: 'نمایش استایل به همراه یک حیوان خانگی برای ایجاد حسی گرم و دوستانه.' },
+        ]
+      },
+      {
+        id: 'fashion_accessories',
+        category: '۴. فَشِن و اکسسوری (Fashion & Accessories)',
+        icon: '👜',
+        options: [
+          { id: 'street_style_handbag', name: 'استایل خیابانی با کیف دستی (Street Style with Handbag)', desc: 'نمایش یک کیف دستی توسط مدل در یک محیط شهری و واقعی.' },
+          { id: 'shoe_detail_closeup', name: 'نمای نزدیک جزئیات کفش (Shoe Detail Close-up)', desc: 'تمرکز بر جزئیات، بافت و دوخت یک کفش لوکس یا ورزشی.' },
+          { id: 'sunglasses_reflection', name: 'عینک آفتابی روی مدل با انعکاس (Sunglasses on Model with Reflection)', desc: 'نمایش عینک آفتابی روی چهره مدل با انعکاس یک منظره جذاب در شیشه‌ها.' },
+          { id: 'watch_luxury_setting', name: 'ساعت مچی روی دست مدل در محیط لوکس (Watch on Model\'s Wrist in Luxury Setting)', desc: 'نمایش یک ساعت مچی روی دست مدل در پس‌زمینه‌ای لوکس مانند داخل یک ماشین گران‌قیمت.' },
+          { id: 'scarf_shawl_flatlay', name: 'چیدمان فلت لی شال و روسری (Scarf & Shawl Flat Lay)', desc: 'چیدمان هنرمندانه یک شال یا روسری به صورت صاف برای نمایش طرح و رنگ آن.' },
+          { id: 'layered_outfit_display', name: 'نمایش لایه‌های مختلف لباس (Layered Outfit Display)', desc: 'تمرکز بر نحوه ترکیب چند لایه لباس برای ایجاد یک استایل کامل.' },
+          { id: 'editorial_statement_jewelry', name: 'عکاسی ادیتوریال با جواهرات خاص (Editorial Shot with Statement Jewelry)', desc: 'یک شات هنری و دراماتیک با تمرکز بر یک قطعه جواهر بزرگ و خاص.' },
+          { id: 'leather_textured_bg', name: 'محصولات چرمی با پس‌زمینه بافت‌دار (Leather Goods with Textured Background)', desc: 'نمایش یک کیف یا کفش چرمی در کنار پس‌زمینه‌هایی مانند بتن یا چوب.' },
+          { id: 'bag_in_motion', name: 'کیف در حال حرکت با مدل (Bag in Motion with Model)', desc: 'نمایش یک کیف در حال حرکت و استفاده طبیعی توسط مدل.' },
+          { id: 'minimalist_fashion_neutral', name: 'فشن مینیمال با پالت رنگی خنثی (Minimalist Fashion with Neutral Palette)', desc: 'یک استایل ساده و شیک با استفاده از رنگ‌های خنثی مانند بژ، سفید و خاکستری.' },
+          { id: 'sneakers_urban', name: 'کفش‌های ورزشی در محیط شهری (Sneakers in Urban Environment)', desc: 'نمایش کفش‌های ورزشی در یک محیط شهری پویا مانند زمین بسکتبال یا اسکیت پارک.' },
+          { id: 'hanging_accessories', name: 'اکسسوری‌های آویخته شده (Hanging Accessories)', desc: 'نمایش اکسسوری‌هایی مانند کیف یا کلاه به صورت آویزان از یک عنصر.' },
+          { id: 'denim_texture_closeup', name: 'نمای کلوزآپ از بافت پارچه جین (Denim Fabric Texture Close-up)', desc: 'تمرکز بر بافت و جزئیات دوخت پارچه جین.' },
+          { id: 'matching_bag_shoes', name: 'ست کامل کیف و کفش (Matching Bag and Shoes Set)', desc: 'نمایش یک ست هماهنگ از کیف و کفش در یک چیدمان شیک.' },
+          { id: 'boho_natural_accessories', name: 'استایل بوهو با اکسسوری‌های طبیعی (Boho Style with Natural Accessories)', desc: 'یک استایل بوهمی با لباس‌های گشاد، رنگ‌های خاکی و اکسسوری‌های دست‌ساز.' },
+          { id: 'fashion_backstage', name: 'عکاسی از پشت صحنه فشن (Fashion Backstage Photography)', desc: 'ایجاد یک فضای شلوغ و پرانرژی از آماده شدن مدل‌ها در پشت صحنه یک فشن شو.' },
+        ]
+      },
+      {
+        id: 'cosmetics_beauty',
+        category: '۵. محصولات آرایشی و بهداشتی (Cosmetics & Beauty)',
+        icon: '💄',
+        options: [
+          { id: 'product_texture_glass', name: 'بافت محصول روی سطح شیشه‌ای (Product Texture on Glass Surface)', desc: 'نمایش بافت یک کرم یا ژل روی یک سطح شفاف شیشه‌ای با نور از زیر.' },
+          { id: 'artistic_lipstick_swatch', name: 'سواچ رژ لب به شکل هنری (Artistic Lipstick Swatch)', desc: 'ایجاد یک طرح هنری و انتزاعی با استفاده از سواچ چند رنگ رژ لب.' },
+          { id: 'water_droplets_packaging', name: 'قطرات آب روی بسته‌‌بندی محصول (Water Droplets on Product Packaging)', desc: 'نمایش قطرات آب روی بسته‌بندی یک محصول برای القای حس تازگی و آبرسانی.' },
+          { id: 'perfume_scent_flowers', name: 'عطر در کنار گل‌های مرتبط با رایحه (Perfume with Scent-Related Flowers)', desc: 'قرار دادن شیشه عطر در کنار گل‌هایی که رایحه اصلی آن را تشکیل می‌ده دهند.' },
+          { id: 'skincare_bathroom', name: 'محصولات مراقبت از پوست در محیط حمام (Skincare in a Bathroom Setting)', desc: 'نمایش محصولات مراقبت از پوست در یک حمام لوکس با حوله‌های نرم و بخار.' },
+          { id: 'colored_powder_explosion', name: 'انفجار پودر آرایشی رنگی (Colored Powder Explosion)', desc: 'ایجاد یک صحنه پویا با انفجار پودرهای رنگی در اطراف محصول.' },
+          { id: 'product_mirror_reflections', name: 'نمایش محصول در کنار آینه (Product with Mirror Reflections)', desc: 'استفاده خلاقانه از آینه برای ایجاد انعکاس‌های جالب از محصول.' },
+          { id: 'luxury_layout_velvet', name: 'چیدمان لوکس با پارچه مخمل (Luxury Layout with Velvet Fabric)', desc: 'قرار دادن محصول روی پارچه مخمل برای ایجاد حسی از تجمل و کیفیت.' },
+          { id: 'pouring_flowing_cream', name: 'کرم در حال ریختن یا حرکت (Pouring or Flowing Cream)', desc: 'ثبت لحظه ریختن یا حرکت یک کرم با بافت غنی.' },
+          { id: 'perfume_bottle_backlight', name: 'بطری عطر با نورپردازی از پشت (Perfume Bottle with Backlight)', desc: 'نورپردازی از پشت شیشه عطر برای برجسته کردن فرم و رنگ مایع درون آن.' },
+          { id: 'minimalist_setup_shadows', name: 'چیدمان مینیمال با سایه‌های بلند (Minimalist Setup with Long Shadows)', desc: 'یک چیدمان ساده با استفاده از نور مستقیم برای ایجاد سایه‌های بلند و دراماتیک.' },
+          { id: 'products_ice_cubes', name: 'محصولات در میان یخ و سرما (Products Among Ice Cubes)', desc: 'قرار دادن محصولات در کنار قطعات یخ برای القای حس خنکی و طراوت.' },
+          { id: 'multi_product_grouping', name: 'ترکیب چند محصول به صورت گروهی (Multi-Product Grouping)', desc: 'نمایش یک مجموعه کامل از محصولات آرایشی به صورت یک چیدمان هماهنگ.' },
+          { id: 'mascara_brush_macro', name: 'نمایش برس ریمل از نمای ماکرو (Mascara Brush Macro Shot)', desc: 'یک نمای بسیار نزدیک از برس ریمل برای نمایش جزئیات و عملکرد آن.' },
+          { id: 'organic_natural_elements', name: 'محصولات ارگانیک با عناصر طبیعی (Organic Products with Natural Elements)', desc: 'چیدمان محصولات ارگانیک در کنار عناصر طبیعی مانند برگ، چوب و سنگ.' },
+          { id: 'floating_product_packaging', name: 'بسته‌بندی محصول به صورت شناور (Floating Product Packaging)', desc: 'نمایش بسته‌بندی محصول به صورت معلق در هوا برای ایجاد حسی سورئال و مدرن.' },
+        ]
+      },
+      {
+        id: 'electronics_appliances',
+        category: '۶. محصولات دیجیتال و لوازم خانگی (Electronics & Home Appliances)',
+        icon: '💻',
+        options: [
+          { id: 'smartphone_neon', name: 'گوشی موبایل با انعکاس نورهای نئونی (Smartphone with Neon Light Reflections)', desc: 'نمایش یک گوشی موبایل با انعکاس نورهای نئونی رنگارنگ روی صفحه و بدنه آن.' },
+          { id: 'open_laptop_desk', name: 'لپ‌تاپ باز روی میز کار مدرن (Open Laptop on a Modern Desk)', desc: 'نمایش یک لپ‌تاپ باز روی یک میز کار مینیمال و مرتب.' },
+          { id: 'headphones_dark_bg', name: 'هدفون روی پایه با پس‌زمینه تیره (Headphones on a Stand with Dark Background)', desc: 'نمایش یک هدفون روی یک پایه مخصوص با پس‌زمینه‌ای تیره برای تاکید بر طراحی آن.' },
+          { id: 'industrial_design_closeup', name: 'نمای نزدیک از جزئیات صنعتی محصول (Close-up of Industrial Design Details)', desc: 'تمرکز بر جزئیات طراحی صنعتی مانند بافت فلز، دکمه‌ها و پورت‌ها.' },
+          { id: 'smart_home_lifestyle', name: 'محصولات هوشمند خانگی در محیط واقعی (Smart Home Devices in a Lifestyle Setting)', desc: 'نمایش اسپیکر هوشمند یا دیگر گجت‌ها در یک خانه مدرن و در حال استفاده.' },
+          { id: 'coffee_maker_steam', name: 'دستگاه قهوه‌ساز در حال کار با بخار (Coffee Maker in Action with Steam)', desc: 'نمایش یک دستگاه قهوه‌ساز در حال آماده کردن قهوه با بخار و قطرات آب.' },
+          { id: 'reflective_shot_glossy', name: 'عکاسی رفلکتیو روی سطح براق (Reflective Shot on a Glossy Surface)', desc: 'قرار دادن محصول روی یک سطح بسیار براق برای ایجاد انعکاس کامل.' },
+          { id: 'geometric_gadget_arrangement', name: 'چیدمان هندسی گجت‌ها (Geometric Gadget Arrangement)', desc: 'چیدمان چند گجت مختلف به صورت منظم و هندسی از نمای بالا.' },
+          { id: 'speaker_visual_sound', name: 'اسپیکر در حال پخش موسیقی با امواج بصری (Speaker with Visual Sound Waves)', desc: 'یک ایده خلاقانه برای نمایش امواج صدا به صورت بصری در اطراف یک اسپیکر.' },
+          { id: 'product_controlled_studio', name: 'محصول در یک استودیو با نورپردازی کنترل‌شده (Product in a Controlled Studio Lighting)', desc: 'یک شات تمیز استودیویی با نورپردازی دقیق برای برجسته کردن تمام زوایای محصول.' },
+          { id: 'smartwatch_workout', name: 'ساعت هوشمند روی دست در حال ورزش (Smartwatch on Wrist During Workout)', desc: 'نمایش یک ساعت هوشمند روی دست یک فرد در حال ورزش برای نشان دادن قابلیت‌های آن.' },
+          { id: 'stainless_steel_kitchen', name: 'لوازم خانگی استیل در آشپزخانه مدرن (Stainless Steel Appliances in a Modern Kitchen)', desc: 'نمایش یک محصول استیل مانند یخچال یا توستر در یک آشپزخانه مدرن.' },
+          { id: 'waterproof_splash', name: 'نمایش ضدآب بودن محصول با پاشش آب (Waterproof Feature with Water Splash)', desc: 'نمایش قابلیت ضدآب بودن یک گجت با استفاده از پاشش آب.' },
+          { id: 'camera_various_lenses', name: 'دوربین عکاسی با لنزهای مختلف (Camera with Various Lenses)', desc: 'نمایش یک بدنه دوربین در کنار چندین لنز مختلف برای عکاسان حرفه‌ای.' },
+          { id: 'gaming_console_rgb', name: 'کنسول بازی با نورپردازی گیمینگ (Gaming Console with RGB Lighting)', desc: 'نمایش یک کنسول بازی در یک محیط با نورپردازی رنگی و اتمسفر گیمینگ.' },
+          { id: 'metallic_shiny_design', name: 'محصولات با طراحی متالیک و براق (Products with Metallic and Shiny Design)', desc: 'تمرکز بر بازتاب نور و درخشش محصولات با بدنه فلزی.' },
+        ]
+      },
+      {
+        id: 'food_beverage',
+        category: '۷. غذا و نوشیدنی (Food & Beverage)',
+        icon: '🍔',
+        options: [
+          { id: 'gourmet_plating', name: 'بشقاب‌آرایی (Gourmet Plating)', desc: 'چیدمان هنرمندانه غذا در بشقاب، مشابه رستوران‌های لوکس.' },
+          { id: 'fresh_ingredients', name: 'مواد اولیه تازه (Fresh Ingredients)', desc: 'نمایش مواد اولیه تازه و باکیفیت محصول در کنار غذای اصلی.' },
+          { id: 'action_food', name: 'اکشن غذا (Action Food)', desc: 'ثبت یک حرکت پویا مانند ریختن سس، پاشیدن پودر یا بخار غذا.' },
+          { id: 'ingredient_photography', name: 'عکاسی مواد اولیه محصول (Product Ingredient Photography)', desc: 'نمایش مواد اولیه تازه و باکیفیت محصول در کنار آن.' },
+          { id: 'dynamic_food_action', name: 'اکشن دینامیک غذا (Dynamic Food Action)', desc: 'ثبت حرکات پویا و پرانرژی مانند پرتاب شدن مواد اولیه یا انفجار آرد.' },
+          { id: 'rustic_food_scene', name: 'صحنه غذای روستیک (Rustic Food Scene)', desc: 'چیدمان غذا در یک فضای روستایی و گرم با عناصر چوبی و طبیعی.' },
+          { id: 'pouring_drink', name: 'ریختن نوشیدنی (Pouring Drink)', desc: 'ثبت لحظه ریختن نوشیدنی در لیوان یا فنجان برای ایجاد حس حرکت و تازگی.' },
+          { id: 'minimalist_drink', name: 'نوشیدنی مینیمال (Minimalist Drink)', desc: 'عکاسی از یک نوشیدنی در فضایی ساده و مینیمال با تاکید بر رنگ و فرم.' },
+          { id: 'dark_food_scene', name: 'صحنه غذای تاریک (Dark Food Scene)', desc: 'عکاسی از غذا در فضایی تاریک با نور متمرکز برای ایجاد حس و حالی گرم و سنگین.' },
+          { id: 'deconstructed_food', name: 'غذای واسازی شده (Deconstructed Food)', desc: 'نمایش اجزای تشکیل‌دهنده یک غذا به صورت جدا از هم و هنرمندانه.' },
+          { id: 'picnic_scene', name: 'صحنه پیک‌نیک (Picnic Scene)', desc: 'چیدمان غذا و نوشیدنی روی یک پارچه در فضای باز مانند پارک یا طبیعت.' },
+          { id: 'breakfast_in_bed', name: 'صبحانه در تختخواب (Breakfast in Bed)', desc: 'صحنه‌ای دنج و راحت از سرو صبحانه در تختخواب.' },
+          { id: 'farm_to_table', name: 'از مزرعه به میز (Farm to Table)', desc: 'نمایش ارتباط مستقیم غذا با مواد اولیه تازه، معمولاً در یک فضای روستایی.' },
+          { id: 'street_food_stall', name: 'دکه غذای خیابانی (Street Food Stall)', desc: 'فضایی پرجنب‌وجوش و واقعی از یک دکه فروش غذای خیابانی.' },
+          { id: 'cocktail_bar_scene', name: 'صحنه بار کوکتل (Cocktail Bar Scene)', desc: 'عکاسی از انواع نوشیدنی‌ها و کوکتل‌ها در فضایی متناسب.' },
+          { id: 'coffee_shop_vibe', name: 'فضای کافی‌شاپ (Coffee Shop Vibe)', desc: 'ایجاد حس و حال یک کافی‌شاپ با نورپردازی گرم، بخار قهوه و میزهای چوبی.' },
+          { id: 'baking_process', name: 'فرآیند پخت (Baking Process)', desc: 'نمایش مراحل پخت نان یا شیرینی، با حضور آرد، خمیر و ابزارهای پخت.' },
+          { id: 'grill_barbecue', name: 'گریل و باربیکیو (Grill & Barbecue)', desc: 'صحنه‌ای از کباب کردن غذا روی آتش با دود و شعله‌های واقعی.' },
+          { id: 'healthy_diet_food', name: 'غذای سالم و رژیمی (Healthy & Diet Food)', desc: 'فضایی روشن و شاداب با تاکید بر مواد اولیه تازه، سبزیجات و غذای سالم.' },
+          { id: 'holiday_feast', name: 'ضیافت تعطیلات (Holiday Feast)', desc: 'میز غذای پر و پیمان و چیدمان شده برای مناسبت‌ها و تعطیلات خاص.' },
+          { id: 'symmetrical_food_art', name: 'هنر غذای متقارن (Symmetrical Food Art)', desc: 'چیدمان متقارن و هنرمندانه مواد غذایی برای ایجاد یک تصویر گرافیکی.' },
+          { id: 'ingredient_explosion', name: 'انفجار مواد اولیه (Ingredient Explosion)', desc: 'نمایش مواد اولیه در حال انفجار یا پرتاب شدن به هوا به صورت فریز شده.' },
+          { id: 'condensation_on_drink', name: 'شبنم روی نوشیدنی (Condensation on Drink)', desc: 'تمرکز بر قطرات شبنم روی لیوان یا بطری نوشیدنی سرد برای القای حس خنکی.' },
+          { id: 'drip_shot', name: 'شات ریزش (Drip Shot)', desc: 'ثبت لحظه چکیدن سس، عسل یا شکلات روی غذا.' },
+          { id: 'sharing_platter', name: 'دیس اشتراکی (Sharing Platter)', desc: 'نمایش یک دیس بزرگ پر از انواع خوراکی‌ها برای به اشتراک گذاشتن.' },
+        ]
+      },
+      {
+        id: 'kids_baby',
+        category: '۸. محصولات کودک و نوزاد (Kids & Baby Products)',
+        icon: '🧸',
+        options: [
+          { id: 'fantasy_dreamy', name: 'فانتزی و رویایی (Fantasy & Dreamy)', desc: 'فضایی جادویی، رویایی و فانتزی، مناسب محصولات کودک و اسباب‌بازی‌ها.' },
+          { id: 'cheerful_colorful', name: 'شاد و رنگارنگ (Cheerful & Colorful)', desc: 'پس‌زمینه‌ای شاد با رنگ‌های متنوع و انرژی‌بخش برای جذب مخاطب کودک.' },
+          { id: 'kids_room_environment', name: 'محیط اتاق کودک (Kids\' Room Environment)', desc: 'قرار دادن محصول در یک محیط واقعی اتاق کودک با تخت, اسباب‌بازی و دکوراسیون.' },
+          { id: 'kids_clothing_flatlay', name: 'چیدمان تخت لباس کودک (Kids\' Clothing Flat Lay)', desc: 'چیدمان خلاقانه و رنگارنگ لباس‌های کودک از نمای بالا.' },
+          { id: 'educational_environment', name: 'محیط آموزشی (Educational Environment)', desc: 'قرار دادن محصول در یک محیط یادگیری مانند مهدکودک یا مدرسه.' },
+          { id: 'outdoor_play', name: 'بازی در فضای باز (Outdoor Play)', desc: 'نمایش اسباب‌بازی‌ها یا محصولات کودک در حین بازی در پارک یا حیاط.' },
+          { id: 'bedtime_story_scene', name: 'صحنه داستان شب (Bedtime Story Scene)', desc: 'فضایی گرم و دنج برای محصولات مرتبط با خواب کودک، مانند کتاب داستان و چراغ خواب.' },
+          { id: 'crafting_with_product', name: 'کاردستی با محصول (Crafting with the Product)', desc: 'نمایش محصول در کنار وسایل کاردستی و خلاقیت.' },
+          { id: 'product_dollhouse', name: 'محصول در خانه عروسکی (Product in a Dollhouse)', desc: 'قرار دادن محصول در یک خانه عروسکی مینیاتوری برای ایجاد مقیاسی جالب.' },
+          { id: 'superhero_theme', name: 'تم ابرقهرمانی (Superhero Theme)', desc: 'استفاده از رنگ‌ها و المان‌های ابرقهرمانی برای محصولات مرتبط.' },
+          { id: 'fairytale_theme', name: 'تم افسانه‌ای (Fairytale Theme)', desc: 'فضایی جادویی با الهام از داستان‌های پریان و افسانه‌ها.' },
+          { id: 'minimalist_kids_room', name: 'اتاق کودک مینیمال (Minimalist Kids\' Room)', desc: 'چیدمان ساده و تمیز اتاق کودک با رنگ‌های خنثی و اسباب‌بازی‌های چوبی.' },
+          { id: 'flatlay_wooden_toys', name: 'فلت لی با اسباب‌بازی چوبی (Flat Lay with Wooden Toys)', desc: 'چیدمان تخت لباس یا محصول کودک در کنار اسباب‌بازی‌های چوبی باکیفیت.' },
+          { id: 'newborn_lifestyle_blanket', name: 'لایف استایل نوزاد با پتوی نرم (Newborn Lifestyle with Soft Blanket)', desc: 'نمایش محصول نوزاد در یک صحنه لطیف و دنج با پتوهای نرم و بافتنی.' },
+          { id: 'kid_playing_product', name: 'کودک در حال بازی با محصول (Kid playing with product)', desc: 'نمایش یک کودک در حال بازی و تعامل طبیعی با محصول برای نشان دادن جذابیت آن.' },
+          { id: 'minimalist_nursery_decor', name: 'دکور مینیمال اتاق نوزاد (Minimalist Nursery Decor)', desc: 'قرار دادن محصول در یک اتاق نوزاد با دکوراسیون مینیمال، مدرن و آرامش‌‌بخش.' },
+          { id: 'toy_explosion_flatlay', name: 'فلت لی انفجار اسباب‌بازی (Toy Explosion Flat Lay)', desc: 'چیدمان تخت و خلاقانه محصول در میان انبوهی از اسباب‌بازی‌های رنگارنگ.' },
+          { id: 'baby_accessories_rug', name: 'اکسسوری نوزاد روی فرش نرم (Baby accessories on a soft rug)', desc: 'چیدمان زیبای اکسسوری‌های نوزاد مانند کفش، کلاه و پیش‌بند روی یک فرش نرم و پرزدار.' },
+          { id: 'themed_birthday_party', name: 'تم جشن تولد کودک (Themed Birthday Party)', desc: 'قرار دادن محصول در یک صحنه شاد با تم جشن تولد، بادکنک و تزئینات.' },
+          { id: 'product_playful_mess', name: 'محصول در یک بهم‌ریختگی بازیگوشانه (Product in a playful mess)', desc: 'نمایش محصول در یک صحنه خلاقانه و بهم‌ریخته از وسایل بازی یا کاردستی.' },
+          { id: 'outdoor_adventure_kid', name: 'ماجراجویی در طبیعت با محصول کودک (Outdoor adventure with kid\'s product)', desc: 'نمایش محصول در یک محیط طبیعی و ماجراجویانه مانند جنگل یا پارک.' },
+          { id: 'handmade_props_crafts', name: 'لوازم دست‌ساز و کاردستی (Handmade Props & Crafts)', desc: 'استفاده از اکسسوری‌های دست‌‌ساز و کاردستی‌های کودکانه در چیدمان صحنه.' },
+          { id: 'baby_milestone_blanket', name: 'اکسسوری نوزاد روی پارچه ماهگرد (Baby milestone blanket accessories)', desc: 'چیدمان اکسسوری‌های نوزاد روی یک پتوی مخصوص ماهگرد برای عکاسی از مراحل رشد.' },
+          { id: 'kids_feeding_accessories', name: 'چیدمان فلت لی لوازم تغذیه کودک (Kids feeding accessories flat lay)', desc: 'چیدمان تخت لوازمی مانند شیشه شیر، پستانک و ظروف غذای کودک.' },
+          { id: 'kids_hair_accessories', name: 'نمایش گیره سر و اکسسوری موی کودک (Kids hair accessories display)', desc: 'چیدمان خلاقانه گیره‌های سر، تل‌ها و دیگر اکسسوری‌های موی کودک.' },
+          { id: 'baby_bath_products', name: 'محصولات بهداشتی نوزاد در حمام (Baby bath products scene)', desc: 'نمایش شامپو، لوسیون و دیگر محصولات بهداشتی نوزاد در یک محیط تمیز و شاد حمام.' },
+          { id: 'baby_shoes_matching', name: 'کفش نوزاد در کنار اکسسوری‌های ست (Baby shoes with matching accessories)', desc: 'نمایش یک جفت کفش نوزاد در کنار اکسسوری‌های هماهنگ مانند کلاه یا دستکش.' },
+        ]
+      },
+      {
+        id: 'jewelry_beauty',
+        category: '۹. جواهرات و زیبایی (Jewelry & Beauty)',
+        icon: '💍',
+        options: [
+          { id: 'macro_details', name: 'جزئیات ماکرو (Macro Details)', desc: 'نمای بسیار نزدیک برای نمایش جزئیات دقیق، سنگ‌ها و حکاکی جواهرات یا بافت لوازم آرایشی.' },
+          { id: 'jewelry_on_model', name: 'جواهر روی مدل (Jewelry on Model)', desc: 'نمایش جواهرات بر روی مدل برای نشان دادن اندازه و نحوه استفاده.' },
+          { id: 'cosmetic_product_swatch', name: 'سواچ محصول آرایشی (Cosmetic Product Swatch)', desc: 'نمایش بافت و رنگ محصولات آرایشی بر روی یک سطح یا پوست.' },
+          { id: 'floating_product', name: 'محصول معلق (Floating Product)', desc: 'نمایش محصول در حالتی معلق و بی‌وزن برای ایجاد حسی سورئال و جادویی.' },
+          { id: 'luxury_layout', name: 'چیدمان لوکس (Luxury Layout)', desc: 'چیدمان هنرمندانه محصول در کنار عناصر لوکس مانند مخمل، ابریشم یا سطوح مرمری.' },
+          { id: 'cosmetics_water', name: 'لوازم آرایش و آب (Cosmetics & Water)', desc: 'ایجاد صحنه‌های خلاقانه با استفاده از آب، مانند پاشش یا غوطه‌ور شدن محصول.' },
+          { id: 'lifestyle_beauty', name: 'زیبایی لایف استایل (Lifestyle Beauty)', desc: 'نمایش محصول زیبایی در یک محیط واقعی، مانند روی میز آرایش و با حضور مدل.' },
+          { id: 'on_natural_stone', name: 'روی سنگ طبیعی (On Natural Stone)', desc: 'قرار دادن محصول روی سنگ‌های طبیعی مانند مرمر، گرانیت یا عقیق.' },
+          { id: 'beauty_wet_look', name: 'زیبایی با ظاهر خیس (Beauty with Wet Look)', desc: 'نمایش محصول روی مدل با پوست یا موی خیس برای حسی تازه و مدرن.' },
+          { id: 'glitter_makeup', name: 'آرایش اکلیلی (Glitter Makeup)', desc: 'استفاده از اکلیل و ذرات درخشان در آرایش یا در کنار محصول.' },
+          { id: 'on_textured_surface', name: 'روی سطح بافت‌دار (On a Textured Surface)', desc: 'قرار دادن جواهرات یا لوازم آرایش روی سطوح با بافت‌های جالب مانند پارچه، چوب یا بتن.' },
+          { id: 'with_flowers', name: 'در کنار گل‌ها (With Flowers)', desc: 'چیدمان لطیف محصول در کنار گل‌ها و گیاهان تازه.' },
+          { id: 'abstract_swatch', name: 'سواچ انتزاعی (Abstract Swatch)', desc: 'ایجاد یک الگوی هنری و انتزاعی با استفاده از بافت محصول آرایشی.' },
+          { id: 'multi_product_flatlay', name: 'چیدمان تخت چند محصولی (Multi-Product Flat Lay)', desc: 'چیدمان چند محصول آرایشی یا جواهرات به صورت فلت لی.' },
+          { id: 'inside_my_bag_scene', name: 'صحنه "داخل کیف من" ("Inside My Bag" Scene)', desc: 'نمایش محصول در کنار دیگر وسایل که به صورت پراکنده از یک کیف بیرون ریخته‌اند.' },
+          { id: 'product_travel_context', name: 'محصول در سفر (Product in Travel Context)', desc: 'نمایش محصول در یک چیدمان مرتبط با سفر، مانند کنار پاسپورت یا روی نقشه.' },
+          { id: 'on_mannequin_bust', name: 'روی تندیس مانکن (On a Mannequin Bust)', desc: 'نمایش جواهرات مانند گردنبند یا گوشواره روی یک مانکن نیم‌تنه.' },
+          { id: 'draped_on_object', name: 'آویخته روی یک شیء (Draped on an Object)', desc: 'آویزان کردن جواهرات روی یک شیء غیرمنتظره مانند شاخه درخت یا یک مجسمه.' },
+          { id: 'bridal_wedding_theme', name: 'تم عروس و عروسی (Bridal & Wedding Theme)', desc: 'چیدمان محصول در فضایی با المان‌های عروسی مانند تور، مروارید و گل‌های سفید.' },
+          { id: 'skincare_routine_action', name: 'روتین پوستی در عمل (Skincare Routine in Action)', desc: 'نمایش مراحل استفاده از محصولات مراقبت از پوست توسط مدل.' },
+          { id: 'before_after_concept', name: 'مفهوم قبل و بعد (Before & After Concept)', desc: 'ایده‌ای برای نمایش تاثیر یک محصول، اگرچه پیاده‌سازی آن ممکن است به دو تصویر نیاز داشته باشد.' },
+          { id: 'geometric_product_arrangement', name: 'چیدمان هندسی محصول (Geometric Product Arrangement)', desc: 'چیدن محصولات در کنار هم برای ایجاد یک الگوی هندسی جذاب.' },
+          { id: 'product_water_ripples', name: 'محصول با امواج آب (Product with Water Ripples)', desc: 'قرار دادن محصول در آب و عکاسی از امواج و انعکاس‌های ایجاد شده.' },
+        ]
+      },
+      {
+        id: 'creative_graphic',
+        category: '۱۰. خلاقانه و گرافیکی (Creative & Graphic)',
+        icon: '🎨',
+        options: [
+          { id: 'abstract_composition', name: 'ترکیب‌‌بندی انتزاعی (Abstract Composition)', desc: 'چیدمان محصول در کنار اشکال و خطوط انتزاعی برای ایجاد یک تصویر هنری.' },
+          { id: 'surreal_scene', name: 'صحنه سورئال (Surreal Scene)', desc: 'قرار دادن محصول در یک محیط غیرواقعی و فراواقع‌گرایانه.' },
+          { id: 'geometric_patterns', name: 'الگوهای هندسی (Geometric Patterns)', desc: 'استفاده از الگوهای تکرارشونده هندسی در پس‌زمینه یا چیدمان.' },
+          { id: 'color_blocking', name: 'بلوک رنگی (Color Blocking)', desc: 'استفاده از سطوح بزرگ با رنگ‌های تخت و یکدست در کنار هم.' },
+          { id: 'holographic_neon', name: 'هولوگرافیک و نئون (Holographic & Neon)', desc: 'ایجاد فضایی آینده‌نگر با استفاده از افکت‌های هولوگرافیک و نورهای نئونی.' },
+          { id: 'monochromatic', name: 'تک‌رنگ (Monochromatic)', desc: 'استفاده از طیف‌های مختلف یک رنگ در کل تصویر برای ایجاد یکپارچگی.' },
+          { id: 'reflections_mirrors', name: 'انعکاس و آینه (Reflections & Mirrors)', desc: 'استفاده خلاقانه از آینه‌ها و سطوح بازتابنده برای ایجاد تصاویر چندلایه.' },
+          { id: 'paper_art_craft', name: 'هنر کاغذی (Paper Art & Craft)', desc: 'ساخت یک صحنه با استفاده از کاغذهای رنگی، اوریگامی یا برش‌های هنری.' },
+          { id: 'retro_pop_art', name: 'رترو و پاپ آرت (Retro & Pop Art)', desc: 'الهام از هنر پاپ و سبک‌های قدیمی با رنگ‌های جیغ و الگوهای گرافیکی.' },
+          { id: '3d_render_style', name: 'سبک رندر سه‌بعدی (3D Render Style)', desc: 'ایجاد تصویری که به نظر می‌رسد یک رندر کامپیوتری سه‌بعدی است.' },
+          { id: 'floral_arrangement', name: 'چیدمان با گل (Floral Arrangement)', desc: 'استفاده خلاقانه و هنرمندانه از گل‌ها در چیدمان صحنه.' },
+          { id: 'light_painting', name: 'نقاشی با نور (Light Painting)', desc: 'استفاده از نوردهی طولانی برای ایجاد رد نورهای متحرک در اطراف محصول.' },
+          { id: 'liquid_chrome_effect', name: 'افکت کروم مایع (Liquid Chrome Effect)', desc: 'ایجاد سطوح فلزی و روان مانند کروم مایع در صحنه.' },
+          { id: 'conceptual_photography', name: 'عکاسی مفهومی (Conceptual Photography)', desc: 'استفاده از نمادها برای انتقال یک ایده یا داستان در مورد محصول.' },
+          { id: 'refraction_in_water', name: 'انکسار در آب (Refraction in Water)', desc: 'ایجاد اعوجاج‌های بصری جالب با قرار دادن محصول پشت یک ظرف آب.' },
+          { id: 'prism_effect', name: 'افکت منشور (Prism Effect)', desc: 'استفاده از منشور برای شکست نور و ایجاد هاله‌های رنگین‌‌کمانی.' },
+          { id: 'cyberpunk_aesthetic', name: 'زیبایی‌شناسی سایبرپانک (Cyberpunk Aesthetic)', desc: 'فضایی آینده‌نگر و شهری با نورهای نئونی فراوان و اتمسفری تاریک.' },
+          { id: 'double_exposure', name: 'نوردهی دوگانه (Double Exposure)', desc: 'ترکیب هنرمندانه دو تصویر در یک قاب، مانند تصویر محصول و یک منظره.' },
+          { id: 'solarpunk', name: 'سولارپانک (Solarpunk)', desc: 'زیبایی‌شناسی آینده‌نگر و خوش‌بینانه که طبیعت و تکنولوژی را با هم ترکیب می‌کند.' },
+          { id: 'diorama_miniature', name: 'دیوراما و مینیاتوری (Diorama & Miniature)', desc: 'ایجاد یک صحنه مینیاتوری تا محصول بزرگ‌تر از اندازه واقعی به نظر برسد.' },
+          { id: 'miniature_scale_photography', name: 'عکاسی با مینیاتور و مقیاس غیرعادی (Miniature & Scale Photography)', desc: 'بازی با مقیاس با قرار دادن محصول در کنار اشیاء مینیاتوری برای بزرگنمایی آن.' },
+          { id: 'cosmic_galactic', name: 'کیهانی و کهکشانی (Cosmic & Galactic)', desc: 'قرار دادن محصول در یک فضای آسمانی با ستاره‌ها، سحابی‌ها و کهکشان‌ها.' },
+          { id: 'memphis_design', name: 'طراحی ممفیس (Memphis Design)', desc: 'سبکی از دهه ۱۹۸۰ با الگوهای هندسی رنگارنگ، خطوط زیگزاگ و اشکال نامتقارن.' },
+          { id: 'anamorphic_illusion', name: 'خطای دید آنامورفیک (Anamorphic Illusion)', desc: 'ایجاد یک تصویر که از یک زاویه خاص به صورت سه‌بعدی یا درست دیده می‌شود.' },
+          { id: 'forced_perspective', name: 'پرسپکتیو اجباری (Forced Perspective)', desc: 'ایجاد خطای دید در مقیاس، که در آن اشیاء دور یا نزدیک، بزرگ‌تر یا کوچک‌تر از واقعیت به نظر می‌رسند.' },
+          { id: 'light_shadow_play', name: 'بازی نور و سایه (Light & Shadow Play)', desc: 'تمرکز بر الگوهای ایجاد شده توسط نور و سایه برای یک ترکیب‌بندی قوی.' },
+          { id: 'broken_mirror_reflection', name: 'انعکاس در آینه شکسته (Broken Mirror Reflection)', desc: 'ایجاد یک تصویر تکه‌تکه و انتزاعی با استفاده از انعکاس در آینه شکسته.' },
+          { id: 'collage_style', name: 'سبک کلاژ (Collage Style)', desc: 'ترکیب چند عکس یا بافت مختلف برای ایجاد یک تصویر واحد به سبک کلاژ.' },
+          { id: 'glitch_effect', name: 'افکت گلیچ (Glitch Effect)', desc: 'شبیه‌سازی خطاهای دیجیتال و نویز برای یک ظاهر مدرن و فناورانه.' },
+          { id: 'infrared_photography', name: 'سبک عکاسی مادون قرمز (Infrared Photography Style)', desc: 'شبیه‌سازی عکاسی با فیلتر مادون قرمز که رنگ‌ها را به شکلی غیرمنتظره تغییر می‌دهد.' },
+          { id: 'product_pattern', name: 'محصول به عنوان بخشی از الگو (Product as Part of a Pattern)', desc: 'تکرار محصول برای ایجاد یک الگوی بصری جذاب و پیوسته.' },
+          { id: 'kintsugi_effect', name: 'افکت کینتسوگی (Kintsugi Effect)', desc: 'الهام از هنر ژاپنی ترمیم سفال‌های شکسته با طلا، نمادی از زیبایی در نقص.' },
+          { id: 'xray_style', name: 'سبک اشعه ایکس (X-ray Style)', desc: 'شبیه‌سازی تصویری که انگار با اشعه ایکس گرفته شده و ساختار داخلی محصول را نشان می‌دهد.' },
+          { id: 'suspended_objects', name: 'چیدمان اشیاء معلق (Suspended Objects Layout)', desc: 'نمایش اجزای مختلف یک صحنه یا محصول به صورت معلق در هوا.' },
+          { id: 'moire_pattern_bg', name: 'پس‌زمینه با الگوی موآره (Moiré Pattern Background)', desc: 'استفاده از الگوهای تداخلی موآره برای ایجاد یک پس‌زمینه گرافیکی و پویا.' },
+          { id: 'watercolor_artistic', name: 'آبرنگی و هنری (Watercolor & Artistic)', desc: 'ایجاد پس‌زمینه‌ای با بافت و حس آبرنگی برای ظاهری هنری و لطیف.' },
+          { id: 'watercolor_inspired', name: 'با الهام از آبرنگ (Watercolor Inspired)', desc: 'ایجاد پس‌زمینه‌ای با بافت و حس آبرنگی برای ظاهری هنری و لطیف.' },
+          { id: 'conceptual_product_art', name: 'هنر مفهومی محصول (Conceptual Product Art)', desc: 'عکاسی مفهومی و هنری از محصول با تاکید بر ایده و داستان.' },
+          { id: 'geometric_design', name: 'طراحی هندسی (Geometric Design)', desc: 'استفاده از اشکال و چیدمان هندسی در طراحی صحنه.' },
+          { id: 'bokeh_effect', name: 'افکت بوکه (Bokeh Effect)', desc: 'ایجاد پس‌زمینه محو و نقاط نوری زیبا برای تمرکز روی محصول.' },
+          { id: 'creative_product_photo', name: 'عکاسی خلاقانه محصول (Product Creative Photography)', desc: 'عکاسی خلاقانه و هنری از محصول با ایده‌های نو.' },
+          { id: 'geometric_composition', name: 'ترکیب‌بندی هندسی (Geometric Composition)', desc: 'چیدمان محصول و عناصر صحنه بر اساس اصول ترکیب‌بندی هندسی.' },
+          { id: 'fine_art_product', name: 'عکاسی هنری فاخر (Fine Art Product Photography)', desc: 'عکاسی از محصول به عنوان یک اثر هنری فاخر.' },
+        ]
+      },
+      {
+        id: 'iranian_spaces',
+        category: '۱۱. فضای ایرانی (Iranian Spaces)',
+        icon: '🕌',
+        options: [
+          { id: 'iranian_home_setting', name: 'فضای خانگی ایرانی (Iranian Home Setting)', desc: 'نمایش محصول در یک خانه مدرن یا سنتی ایرانی با المان‌های آشنا.' },
+          { id: 'everyday_iranian_elements', name: 'عناصر فرهنگی روزمره ایرانی (Everyday Iranian Cultural Elements)', desc: 'استفاده از وسایل روزمره ایرانی مانند استکان چای، فرش یا پشتی در چیدمان.' },
+          { id: 'iranian_architecture_urban', name: 'معماری و فضاهای شهری ایرانی (Iranian Architecture & Urban Spaces)', desc: 'قرار دادن محصول در پس‌زمینه‌ای از معماری شهری ایران، مانند یک کوچه قدیمی یا یک ساختمان مدرن.' },
+          { id: 'traditional_iranian_architecture', name: 'معماری سنتی ایرانی (Traditional Iranian Architecture)', desc: 'استفاده از المان‌های معماری سنتی مانند طاق‌ها، کاشی‌‌کاری و حیاط مرکزی.' },
+          { id: 'islamic_architecture', name: 'معماری اسلامی (Islamic Architecture)', desc: 'الهام از الگوها و ساختارهای معماری اسلامی در طراحی صحنه.' },
+          { id: 'modern_iranian_lifestyle', name: 'سبک زندگی ایرانی مدرن (Modern Iranian Lifestyle)', desc: 'نمایش محصول در بطن یک زندگی مدرن و امروزی در ایران.' },
+          { id: 'iranian_colors_textures', name: 'رنگ‌ و بافت ایرانی (Iranian Colors & Textures)', desc: 'استفاده از پالت‌های رنگی و بافت‌های الهام گرفته از هنر ایرانی مانند فیروزه‌ای یا طرح فرش.' },
+          { id: 'fusion_tradition_modernity', name: 'ادغام سنت ایرانی و مدرنیته (Fusion of Iranian Tradition & Modernity)', desc: 'ترکیب خلاقانه عناصر سنتی و مدرن ایرانی در یک صحنه.' },
+          { id: 'iranian_daily_life', name: 'زندگی روزمره ایرانی (Iranian Daily Life)', desc: 'بازسازی یک صحنه واقعی و آشنا از زندگی روزمره در ایران.' },
+          { id: 'islamic_pattern', name: 'طرح اسلامی (Islamic Pattern)', desc: 'استفاده از نقوش و الگوهای هندسی اسلامی در پس‌زمینه یا چیدمان.' },
+          { id: 'eslimi_pattern', name: 'طرح اسلیمی (Eslimi Pattern)', desc: 'استفاده از نقوش اسلیمی و ختایی در طراحی صحنه.' },
+          { id: 'iranian_decor_arrangement', name: 'چیدمان و دکور ایرانی (Iranian Decor & Arrangement)', desc: 'چیدمان محصول با استفاده از وسایل دکوری و هنری ایرانی.' },
+        ]
+      },
+      {
+        id: 'environmental_styles',
+        category: '۱۲. سبک‌های محیطی (Environmental Styles)',
+        icon: '🌳',
+        options: [
+          { id: 'industrial_chic', name: 'صنعتی شیک (Industrial Chic)', desc: 'قرار دادن محصول در فضایی با المان‌های صنعتی مانند بتن، فلز و آجر.' },
+          { id: 'natural_organic', name: 'طبیعی و ارگانیک (Natural & Organic)', desc: 'چیدمان محصول در کنار عناصر طبیعی مانند برگ، سنگ، خزه یا چوب.' },
+          { id: 'warm_cozy_hygge', name: 'گرم و دنج - هوگه (Warm & Cozy - Hygge)', desc: 'ایجاد فضایی گرم، راحت و دنج با استفاده از پتو، شمع و نور ملایم.' },
+          { id: 'tech_futuristic', name: 'فناورانه و آینده‌نگر (Tech & Futuristic)', desc: 'فضایی مدرن با خطوط صاف، نورپردازی LED و المان‌های فناورانه.' },
+          { id: 'boho_earthy', name: 'بوهو و خاکی (Boho & Earthy)', desc: 'فضایی با رنگ‌های خاکی، گیاهان، بافت‌های طبیعی و حسی آرام و هنری.' },
+          { id: 'urban_gritty', name: 'شهری و خشن (Urban & Gritty)', desc: 'عکاسی در محیط شهری با پس‌زمینه‌هایی مانند دیوار گرافیتی یا آسفالت.' },
+          { id: 'luxury_opulent', name: 'لوکس و مجلل (Luxury & Opulent)', desc: 'استفاده از متریال‌های لوکس مانند مخمل، طلا، مرمر برای حسی گران‌قیمت.' },
+          { id: 'spa_wellness', name: 'اسپا و سلامتی (Spa & Wellness)', desc: 'فضایی آرامش‌بخش با المان‌هایی مانند شمع، سنگ‌های ماساژ، حوله‌های نرم و گیاهان.' },
+          { id: 'mid_century_modern', name: 'مدرن میانه قرن (Mid-Century Modern)', desc: 'دکوراسیون داخلی با الهام از سبک طراحی دهه‌های ۱۹۵۰ و ۱۹۶۰، با خطوط تمیز و چوب‌های تیره.' },
+          { id: 'art_deco', name: 'آرت دکو (Art Deco)', desc: 'استفاده از الگوهای هندسی، تزئینات فلزی و عناصر لوکس به سبک هنری آرت دکو.' },
+          { id: 'scandinavian_interior', name: 'دکوراسیون داخلی اسکاندیناوی (Scandinavian Interior Design)', desc: 'فضایی روشن، مینیمال و کاربردی با چوب‌های روشن و رنگ‌های خنثی.' },
+        ]
+      },
+      {
+        id: 'industrial_workshop',
+        category: '۱۳. عکاسی صنعتی و کارگاهی (Industrial & Workshop Photography)',
+        icon: '🏭',
+        options: [
+          { id: 'tools_in_workshop', name: 'ابزار در محیط کارگاهی (Tools in Workshop)', desc: 'نمایش ابزار روی میز کار، با براده‌های چوب یا فلز و فضایی واقعی.' },
+          { id: 'clean_tool_catalog', name: 'شات تمیز کاتالوگ ابزار (Clean Tool Catalog Shot)', desc: 'عکاسی تمیز و واضح از ابزار با پس‌زمینه صنعتی خنثی، مناسب برای کاتالوگ.' },
+          { id: 'macro_details_tools', name: 'جزئیات ماکرو ابزار صنعتی (Macro Details of Tools)', desc: 'نمای بسیار نزدیک از بافت فلز، چرخ‌دنده‌ها یا تیغه‌های ابزار برای تاکید بر کیفیت ساخت.' },
+          { id: 'tool_in_action', name: 'ابزار در حال استفاده (Tool in Action)', desc: 'نمایش ابزار در حال کار، همراه با حرکت، جرقه یا گرد و غبار برای القای حس قدرت و کارایی.' },
+        ]
+      },
+      {
+        id: 'texture_wall_studio',
+        category: '۱۴. استودیو با دیوار بافت‌دار (Texture Wall Studio)',
+        icon: '🧱',
+        options: [
+          { id: 'decorative_textures', name: 'بافت‌های دکوراتیو (Decorative Textures)', desc: 'استفاده از دیوارهایی با بافت‌های تزئینی متنوع.' },
+          { id: 'rough_stucco', name: 'بافت گچبری خشن (Rough Stucco Texture)', desc: 'دیواری با پوشش گچبری با بافت خشن و نامنظم.' },
+          { id: 'brick_texture', name: 'بافت آجر (Brick Texture)', desc: 'پس‌زمینه‌ای با دیوار آجری.' },
+          { id: 'old_brick_texture', name: 'بافت آجر قدیمی (Old Brick Texture)', desc: 'پس‌زمینه‌ای با دیوار آجری کهنه و فرسوده.' },
+          { id: 'wooden_walls_texture', name: 'بافت دیوار چوبی (Wooden Walls Texture)', desc: 'دیوارهایی با پوشش چوب طبیعی یا پانل‌های چوبی.' },
+          { id: 'crumpled_paper_texture', name: 'بافت کاغذ مچاله شده (Crumpled Paper Texture)', desc: 'پس‌زمینه‌ای خلاقانه با استفاده از کاغذ مچاله شده.' },
+          { id: 'artistic_abstract_texture', name: 'بافت هنری/انتزاعی (Artistic/Abstract Texture)', desc: 'دیوارهایی با بافت‌های هنری و غیرمعمول.' },
+          { id: 'faux_fur_texture', name: 'بافت خز مصنوعی (Faux Fur Texture)', desc: 'دیواری پوشیده از خز مصنوعی برای ایجاد حسی نرم و لوکس.' },
+          { id: 'concrete_walls_texture', name: 'بافت دیوار بتنی (Concrete Walls Texture)', desc: 'دیوارهای بتنی اکسپوز برای فضایی مدرن و صنعتی.' },
+          { id: 'rusty_metal_texture', name: 'بافت فلز زنگ زده (Rusty Metal Texture)', desc: 'دیوارهایی از ورق‌های فلزی زنگ‌زده برای حسی صنعتی و وینتیج.' },
+          { id: 'geometric_textures', name: 'بافت‌های هندسی (Geometric Textures)', desc: 'دیوارهایی با الگوها و بافت‌های برجسته هندسی.' },
+          { id: 'abstract_murals_texture', name: 'بافت نقاشی دیواری انتزاعی (Abstract Murals Texture)', desc: 'دیواری با یک نقاشی انتزاعی که دارای بافت است.' },
+          { id: 'abstract_murals', name: 'نقاشی دیواری انتزاعی (Abstract Murals)', desc: 'دیواری با یک نقاشی دیواری انتزاعی و هنری.' },
+          { id: '3d_wall_panels', name: 'پنل‌های دیواری سه‌بعدی (3D Wall Panels)', desc: 'استفاده از پنل‌های دکوراتیو سه‌بعدی برای ایجاد عمق.' },
+          { id: 'wallpaper_murals', name: 'پوستر دیواری (Wallpaper Murals)', desc: 'استفاده از پوسترهای دیواری با طرح‌های خاص.' },
+          { id: 'limewash_italian_plaster', name: 'پوشش آهکی و گچ ایتالیایی (Limewash and Italian Plaster)', desc: 'دیوارهایی با پوشش پتینه و بافت‌دار به سبک کلاسیک.' },
+        ]
+      },
+      {
+        id: 'occasions_themes',
+        category: '۱۵. مناسبت‌ها و تم‌ها (Occasions & Themes)',
+        icon: '🎉',
+        options: [
+          { id: 'themed', name: 'تم (Themed)', desc: 'انتخاب یک تم کلی برای صحنه، که با دیگر گزینه‌ها ترکیب می‌شود.' },
+          { id: 'advertising_poster', name: 'پوستر تبلیغاتی (Advertising Poster)', desc: 'طراحی صحنه به سبک یک پوستر تبلیغاتی حرفه‌ای با فضای کافی برای متن.' },
+          { id: 'iranian_nowruz', name: 'عید نوروز ایرانی (Iranian Nowruz)', desc: 'فضایی با تم عید نوروز و سفره هفت‌سین.' },
+          { id: 'iranian_yalda_night', name: 'شب یلدا ایرانی (Iranian Yalda Night)', desc: 'فضایی با تم شب یلدا، با انار، هندوانه و حافظ.' },
+          { id: 'black_friday', name: 'بلک فرایدی (Black Friday)', desc: 'فضایی با تم خرید و تخفیف بلک فرایدی، معمولاً با رنگ‌های تیره و المان‌های فروش.' },
+          { id: 'christmas', name: 'کریسمس (Christmas)', desc: 'فضایی با تم کریسمس، درخت کاج، هدیه‌ها و برف.' },
+          { id: 'valentines_with_hearts', name: 'ولنتاین با قلب (Valentine\'s with Hearts)', desc: 'فضایی رمانتیک با تم ولنتاین، با قلب.' },
+          { id: 'valentines_with_roses', name: 'ولنتاین با گل رز (Valentine\'s with Roses)', desc: 'فضایی رمانتیک با تم ولنتاین، با گل رز.' },
+          { id: 'ramadan', name: 'رمضان (Ramadan)', desc: 'فضایی معنوی با تم ماه رمضان، فانوس و المان‌های اسلامی.' },
+          { id: 'easter', name: 'عید پاک (Easter)', desc: 'فضایی بهاری با تم عید پاک و تخم‌مرغ‌های رنگی.' },
+          { id: 'mothers_day', name: 'روز مادر (Mother\'s Day)', desc: 'فضایی گرم و صمیمی برای گرامیداشت روز مادر.' },
+          { id: 'fathers_day', name: 'روز پدر (Father\'s Day)', desc: 'فضایی برای گرامیداشت روز پدر.' },
+          { id: 'wedding', name: 'عروسی (Wedding)', desc: 'فضایی با تم جشن عروسی، با گل، تور و المان‌های عاشقانه.' },
+          { id: 'birthday_party', name: 'جشن تولد (Birthday Party)', desc: 'فضایی شاد با تم جشن تولد، بادکنک، کیک و تزئینات.' },
+          { id: 'baby_shower', name: 'جشن سیسمونی (Baby Shower)', desc: 'فضایی شاد و لطیف با تم جشن تولد نوزاد.' },
+          { id: 'celebration', name: 'جشن گرفتن (Celebration)', desc: 'فضایی عمومی برای جشن و شادی، با بادکنک و تزئینات.' },
+          { id: 'new_year', name: 'سال جدید (New Year)', desc: 'فضایی برای جشن سال نو میلادی.' },
+          { id: 'love', name: 'عشق (Love)', desc: 'فضایی با تم کلی عشق و محبت.' },
+        ]
+      },
+      {
+        id: 'seasons_weather',
+        category: '۱۶. فصل‌ها و آب و هوا (Seasons & Weather)',
+        icon: '🌦️',
+        options: [
+          { id: 'spring', name: 'بهار (Spring)', desc: 'فضایی پر از شکوفه، سرسبزی و حس تازگی بهار.' },
+          { id: 'summer', name: 'تابستان (Summer)', desc: 'فضایی آفتابی، شاد و پرانرژی تابستان.' },
+          { id: 'autumn', name: 'پاییز (Autumn)', desc: 'فضایی با برگ‌های نارنجی و رنگ‌های گرم پاییزی.' },
+          { id: 'winter', name: 'زمستان (Winter)', desc: 'فضایی سرد و برفی زمستان.' },
+          { id: 'winter_wonderland', name: 'سرزمین عجایب زمستانی (Winter Wonderland)', desc: 'یک منظره زمستانی جادویی و رویایی.' },
+          { id: 'rainy_weather', name: 'هوای بارانی (Rainy Weather)', desc: 'فضایی با حس و حال بارانی، با قطرات آب و انعکاس نور.' },
+          { id: 'snowy_weather', name: 'هوای برفی (Snowy Weather)', desc: 'فضایی پوشیده از برف.' },
+        ]
+      },
+      {
+        id: 'indoor_environments',
+        category: '۱۷. محیط‌های داخلی (Indoor Environments)',
+        icon: '🛋️',
+        options: [
+          { id: 'office_workspace', name: 'اداری و کاری (Office & Workspace)', desc: 'قرار دادن محصول روی یک میز کار مدرن و مرتب با لوازم اداری شیک.' },
+          { id: 'kitchen_home', name: 'آشپزخانه و خانه (Kitchen & Home)', desc: 'نمایش محصول در یک آشپزخانه مدرن، روی کانتر یا در کنار لوازم خانگی.' },
+          { id: 'gym_fitness', name: 'ورزشی و باشگاه (Gym & Fitness)', desc: 'محصول در محیط باشگاه ورزشی، در کنار دمبل، مت یوگا یا تجهیزات ورزشی.' },
+          { id: 'professional_kitchen', name: 'صحنه آشپزخانه حرفه‌ای (Professional Kitchen Scene)', desc: 'نمایش محصول در یک آشپزخانه لوکس و مجهز با وسایل استیل و کانترهای سنگی.' },
+          { id: 'automotive_studio', name: 'شات استودیویی خودرو (Automotive Studio Shot)', desc: 'عکاسی حرفه‌ای از خودرو یا محصولات مرتبط در یک استودیوی تمیز با نورپردازی دقیق.' },
+          { id: 'artists_atelier', name: 'آتلیه هنرمند (Artist\'s Atelier)', desc: 'فضایی خلاق و صنعتی با پنجره‌های بزرگ، سه‌‌پایه‌های نقاشی، بوم‌ها و رنگ‌ها.' },
+          { id: 'painting_studio', name: 'آتلیه نقاشی (Painting Studio)', desc: 'فضایی پر از بوم‌های نقاشی، رنگ و ابزارهای هنری.' },
+          { id: 'art_gallery', name: 'گالری نقاشی (Art Gallery)', desc: 'قرار دادن محصول در فضای یک گالری هنری مدرن با دیوارهای سفید و نورپردازی متمرکز.' },
+          { id: 'library_study', name: 'کتابخانه یا اتاق مطالعه (Library or Study Room)', desc: 'فضایی کلاسیک و آرام با قفسه‌های کتاب، میز چوبی و چراغ مطالعه.' },
+          { id: 'japanese_tea_house', name: 'خانه چای ژاپنی (Japanese Tea House)', desc: 'معماری سنتی ژاپنی با درهای کشویی، تاتامی و وسایل ساده برای مراسم چای.' },
+          { id: 'lush_greenhouse', name: 'گلخانه سرسبز (Lush Greenhouse)', desc: 'فضایی پر از گیاهان متنوع، نور طبیعی و رطوبت در یک گلخانه شیشه‌ای.' },
+          { id: 'modern_museum_context', name: 'در زمینه موزه مدرن (In a Modern Museum Context)', desc: 'قرار دادن محصول روی یک پایه در یک گالری یا موزه مدرن با دیوارهای سفید.' },
+          { id: 'old_bookstore', name: 'کتابفروشی قدیمی (Old Bookstore)', desc: 'فضایی گرم و نوستالژیک با قفسه‌های چوبی پر از کتاب‌های قدیمی.' },
+          { id: 'bedroom', name: 'اتاق خواب (Bedroom)', desc: 'نمایش محصول در یک اتاق خواب چیدمان شده.' },
+          { id: 'bathroom', name: 'حمام (Bathroom)', desc: 'نمایش محصول در یک حمام مدرن یا کلاسیک.' },
+          { id: 'restaurant', name: 'رستوران (Restaurant)', desc: 'قرار دادن محصول در محیط یک رستوران شیک.' },
+          { id: 'cafe_vibe', name: 'فضای کافه (Cafe Vibe)', desc: 'قرار دادن محصول در محیط دنج یک کافه.' },
+          { id: 'workshop_industrial', name: 'فضای کارگاهی / صنعتی (Workshop / Industrial Space)', desc: 'نمایش محصول در یک کارگاه یا فضای صنعتی.' },
+        ]
+      },
+      {
+        id: 'outdoor_nature',
+        category: '۱۸. محیط‌های خارجی و طبیعت (Outdoor & Nature)',
+        icon: '🏕️',
+        options: [
+          { id: 'beach_tropical', name: 'ساحلی و استوایی (Beach & Tropical)', desc: 'فضای ساحلی آفتابی، با شن، صدف و برگ‌های استوایی برای حس تعطیلات.' },
+          { id: 'architectural_bg', name: 'در زمینه معماری (Architectural Background)', desc: 'قرار دادن محصول در یک محیط با معماری خاص و قوی.' },
+          { id: 'underwater_scene', name: 'صحنه زیر آب (Underwater Scene)', desc: 'قرار دادن محصول در یک صحنه زیر آب، با حباب‌ها، انعکاس نور و حس بی‌وزنی.' },
+          { id: 'japanese_zen_garden', name: 'باغ ذن ژاپنی (Japanese Zen Garden)', desc: 'فضایی آرام و مینیمال با شن، سنگ و گیاهان به سبک باغ‌های ژاپنی.' },
+          { id: 'parisian_cafe', name: 'صحنه کافه پاریسی (Parisian Cafe Scene)', desc: 'فضایی رمانتیک و شیک با میز و صندلی‌های فرفورژه در یک کافه به سبک پاریسی.' },
+          { id: 'rooftop_garden', name: 'باغ روی پشت‌بام (Rooftop Garden)', desc: 'نمایش محصول در یک باغچه سرسبز روی پشت‌بام با نمای شهری در پس‌زمینه.' },
+          { id: 'tropical_rainforest', name: 'جنگل بارانی استوایی (Tropical Rainforest)', desc: 'محیطی سرسبز و مرطوب با برگ‌های بزرگ استوایی، مه و نور فیلتر شده از میان درختان.' },
+          { id: 'desert_oasis', name: 'واحه در بیابان (Desert Oasis)', desc: 'صحنه‌ای در دل کویر با شن‌های طلایی، نخل و یک برکه آب کوچک.' },
+          { id: 'snowy_cabin', name: 'کلبه برفی (Snowy Cabin)', desc: 'فضایی دنج و گرم در یک کلبه چوبی در میان منظره‌ای برفی.' },
+          { id: 'sailboat_deck', name: 'عرشه قایق بادبانی (Sailboat Deck)', desc: 'نمایش محصول روی عرشه یک قایق بادبانی لوکس با پس‌زمینه دریا و آسمان.' },
+          { id: 'glamping', name: 'کمپینگ لوکس (Glamping)', desc: 'فضایی بین طبیعت و تجمل، در یک چادر مجهز و شیک در دل طبیعت.' },
+          { id: 'mountain_view', name: 'منظره کوهستان (Mountain View)', desc: 'قرار دادن محصول در پس‌زمینه‌ای از کوه‌های باشکوه.' },
+          { id: 'snowy_mountains', name: 'کوهستان برفی (Snowy Mountains)', desc: 'قرار دادن محصول در یک منظره کوهستانی پوشیده از برف.' },
+          { id: 'sand_dunes', name: 'تپه‌های شنی (Sand Dunes)', desc: 'نمایش محصول در یک بیابان با تپه‌های شنی نرم.' },
+          { id: 'tree_stump', name: 'کنده درخت (Tree Stump)', desc: 'قرار دادن محصول روی یک کنده درخت در جنگل.' },
+          { id: 'street', name: 'خیابانی (Street)', desc: 'عکاسی از محصول در یک محیط شهری و خیابانی.' },
+          { id: 'rural_summer', name: 'تابستان روستایی (Rural Summer)', desc: 'یک منظره آرام و زیبا از ییلاق در تابستان.' },
+          { id: 'tropical_mountain_beach', name: 'ساحل کوهستانی گرمسیری (Tropical Mountain Beach)', desc: 'ترکیبی از کوه، جنگل‌های استوایی و ساحل دریا.' },
+          { id: 'waterfall', name: 'آبشار (Waterfall)', desc: 'قرار دادن محصول در کنار یک آبشار خروشان.' },
+          { id: 'river_valley', name: 'رودخانه در دره (River in a Valley)', desc: 'نمایش محصول در کنار یک رودخانه که از میان یک دره می‌گذرد.' },
+          { id: 'sandy_desert', name: 'بیابان شنی (Sandy Desert)', desc: 'یک منظره وسیع از بیابان شنی.' },
+          { id: 'on_clouds', name: 'روی ابرها (On Clouds)', desc: 'قرار دادن محصول در فضایی رویایی بر روی ابرها.' },
+        ]
+      },
+      {
+        id: 'decorative_arrangement',
+        category: '۱۹. دکوراتیو و چیدمان (Decorative & Arrangement)',
+        icon: '🖼️',
+        options: [
+          { id: 'art_gallery_wall', name: 'دیوار گالری هنری (Art Gallery Wall)', desc: 'نمایش محصولات دکوراتیو مانند قاب عکس یا تابلو روی یک دیوار چیدمان شده.' },
+          { id: 'in_styled_room', name: 'در اتاق چیدمان شده (In a Styled Room)', desc: 'نمایش محصول دکوراتیو در یک اتاق با چیدمان و دکوراسیون متناسب.' },
+          { id: 'styled_shelf', name: 'شلفی - قفسه چیدمان شده (Styled Shelf - Shelfie)', desc: 'نمایش محصول روی یک قفسه که با وسایل دکوری دیگر به زیبایی چیدمان شده است.' },
+          { id: 'product_wall_art', name: 'محصول به عنوان هنر دیواری (Product as Wall Art)', desc: 'نمایش محصول به صورتی که روی دیوار نصب شده است.' },
+          { id: 'in_workspace', name: 'در فضای کار (In a Workspace)', desc: 'قرار دادن محصول دکوراتیو در یک محیط اداری یا میز کار خانگی.' },
+          { id: 'on_coffee_table', name: 'روی میز قهوه‌خوری (On a Coffee Table)', desc: 'چیدمان محصول روی میز قهوه‌خوری در کنار کتاب، شمع و دیگر وسایل دکوری.' },
+          { id: 'as_centerpiece', name: 'به عنوان قطعه مرکزی (As a Centerpiece)', desc: 'قرار دادن محصول در مرکز یک میز یا چیدمان به عنوان نقطه کانونی.' },
+          { id: 'home_flatlay', name: 'چیدمان تخت خانگی (Home Flat Lay)', desc: 'چیدمان وسایل مختلف خانه به همراه محصول از نمای بالا.' },
+          { id: 'product_reflection_mirror', name: 'انعکاس محصول در آینه (Product Reflection in Mirror)', desc: 'استفاده خلاقانه از آینه برای نمایش محصول و انعکاس آن.' },
+        ]
+      },
+      {
+        id: 'mood_atmosphere',
+        category: '۲۰. حس و حال و اتمسفر (Mood & Atmosphere)',
+        icon: '🎭',
+        options: [
+          { id: 'serene_tranquil', name: 'آرامش‌بخش (Serene / Tranquil)', desc: 'حس سکوت، صلح، آرامش ذهن. (نور نرم، رنگ‌های ملایم، ترکیب‌بندی ساده).' },
+          { id: 'nostalgic', name: 'نوستالژیک (Nostalgic)', desc: 'حس دلتنگی، یادآوری گذشته، خاطرات شیرین و تلخ. (تنالیته‌های سِپیا/قدیمی، رنگ‌های کم‌رنگ).' },
+          { id: 'dramatic', name: 'دراماتیک (Dramatic)', desc: 'حس پر کنتراست، قدرت، هیجان زیاد، اغلب با سایه‌های عمیق. (نورپردازی سخت، کنتراست بالا، رنگ‌های تیره).' },
+          { id: 'joyful_vibrant', name: 'شاد و پرانرژی (Joyful / Vibrant)', desc: 'حس خوشحالی، سرزندگی، تحرک و جنب و جوش. (رنگ‌های گرم و اشباع، نور زیاد).' },
+          { id: 'melancholy', name: 'غمگین و مالیخولیایی (Melancholy)', desc: 'حس غم آرام، دلتنگی عمیق، اندوه شاعرانه. (رنگ‌های سرد، نور کم، کنتراست پایین).' },
+          { id: 'mysterious_ambiguous', name: 'رمزآلود و مبهم (Mysterious / Ambiguous)', desc: 'حس کنجکاوی، پنهان بودن، راز. (سایه‌های زیاد، نورپردازی موضعی، مه).' },
+          { id: 'exciting_thrilling', name: 'هیجان‌انگیز (Exciting / Thrilling)', desc: 'حس انتظار، سرعت، ماجراجویی. (حرکت، فریز شدن سوژه، رنگ‌های تند).' },
+          { id: 'romantic', name: 'عاشقانه (Romantic)', desc: 'حس لطافت، نزدیکی، عشق و علاقه. (نور گرم و نرم، تاری ملایم (بوکه)، رنگ صورتی/قرمز).' },
+          { id: 'grungy_raw', name: 'خشن و گرانج (Grungy / Raw)', desc: 'حس بی‌نظمی، بافت‌های زمخت، ضد فرهنگ. (بافت‌های کهنه، رنگ‌های کدر، کنتراست بالا).' },
+          { id: 'innocent_pure', name: 'معصومانه (Innocent / Pure)', desc: 'حس سادگی، پاکی، بی‌آلایشی. (نور بالا (High Key)، رنگ‌های پاستلی، سفیدی زیاد).' },
+          { id: 'foreboding_ominous', name: 'تهدیدآمیز (Foreboding / Ominous)', desc: 'حس خطر، اتفاق بد، هشدار. (رنگ‌های سرد تیره، سایه‌های بلند، ابرها).' },
+          { id: 'whimsical_dreamy', name: 'فانتزی و رؤیایی (Whimsical / Dreamy)', desc: 'حس غیرواقعی، تخیلی، سحر و جادو. (نورهای رنگی، فوکوس نرم، بوکه‌های عجیب).' },
+          { id: 'cozy_intimate', name: 'دنج و راحت (Cozy / Intimate)', desc: 'حس گرما، امنیت، خانه. (نورهای زرد و نارنجی، بافت‌های پشمی/بافتنی، عمق میدان کم).' },
+          { id: 'isolated_lonely', name: 'انزوا و تنهایی (Isolated / Lonely)', desc: 'حس جدایی، یک نفر در یک فضای بزرگ. (فضای خالی زیاد، سوژه کوچک در کادر، رنگ‌های سرد).' },
+          { id: 'empowering_bold', name: 'قدرتمند و قاطع (Empowering / Bold)', desc: 'حس اعتماد به نفس، کنترل، نیرومندی. (زاویه دوربین پایین به بالا، کنتراست قوی، ژست‌های محکم).' },
+          { id: 'contemplative_pensive', name: 'فلسفی/تأمل‌برانگیز (Contemplative / Pensive)', desc: 'حس تفکر عمیق، مکث، درونی. (نورپردازی ملایم، تمرکز روی حالات چهره، فضای آرام).' },
+          { id: 'eerie_void', name: 'خالی و پوچ (Eerie / Void)', desc: 'حس مرموز، ترسناک، خلأ. (رنگ‌های مونوکروم، مه یا دود، سایه‌های نامفهوم).' },
+          { id: 'ethereal_light', name: 'تابستانی و تازه (Ethereal / Light)', desc: 'حس سبکی، شفافیت، نورانی بودن. (نور ملایم، رنگ‌های پاستلی و روشن، حس آسمانی).' },
+          { id: 'anxious_tense', name: 'اضطراب‌آور (Anxious / Tense)', desc: 'حس نگرانی، فشار، استرس. (ترکیب‌بندی نامتوازن، رنگ‌های متضاد تند، فوکوس ناپایدار).' },
+          { id: 'epic_grand', name: 'حماسی و عظیم (Epic / Grand)', desc: 'حس بزرگی، شکوه، مقیاس وسیع. (زاویه واید، مناظر طبیعی یا معماری بزرگ، نورپردازی گسترده).' },
+          { id: 'ephemeral_fleeting', name: 'عجله‌ای و گذرا (Ephemeral / Fleeting)', desc: 'حس موقتی بودن، لحظه‌ای، زودگذر. (حرکت بلور (Motion Blur)، نورپردازی سریع، سوژه‌های ناپایدار).' },
+          { id: 'alien_surreal', name: 'غریب و بیگانه (Alien / Surreal)', desc: 'حس غیرعادی، خارج از واقعیت، خواب و بیداری. (رنگ‌های نئونی، استفاده خلاقانه از آینه/انعکاس، زوایای عجیب).' },
+          { id: 'worn_authentic', name: 'فرسوده و با اصالت (Worn / Authentic)', desc: 'حس واقعی بودن، دست‌نخورده، بافت کهنه و پر از جزئیات. (نورپردازی جهت‌دار برای برجسته کردن بافت، رنگ‌های خاکی).' },
+          { id: 'edgy_provocative', name: 'تند و زننده (Edgy / Provocative)', desc: 'حس جسارت، برهم زدن قواعد، متفاوت بودن. (کنتراست شدید، ژست‌های غیرمتعارف، نورپردازی جسورانه).' },
+          { id: 'low_key', name: 'نورپردازی کم‌کلید (Low Key)', desc: 'حس تاریک، متمرکز، اسرارآمیز. (اکثریت کادر تیره، نور تنها روی بخش کوچکی از سوژه).' },
+          { id: 'high_key', name: 'نورپردازی زیاد کلید (High Key)', desc: 'حس روشن، سبک، هوایی، مینیمال. (اکثریت کادر روشن یا سفید، کنتراست بسیار پایین).' },
+          { id: 'majestic_grandeur', name: 'شکوهمند و با عظمت (Majestic / Grandeur)', desc: 'حس بزرگ، باشکوه، قابل احترام. (مقیاس بزرگ، تقارن، نورپردازی تند و جهت‌دار).' },
+          { id: 'subtle_understated', name: 'پنهانی و مخفی (Subtle / Understated)', desc: 'حس کم‌حرف، ظریف، نیاز به دقت. (رنگ‌های مونوکروم یا کم‌رنگ، جزئیات کوچک، نورپردازی یکنواخت).' },
+          { id: 'indifferent_apathetic', name: 'بی‌تفاوت (Indifferent / Apathetic)', desc: 'حس بی‌علاقگی، خنثی، بدون احساس. (رنگ‌های مات و خنثی، ژست‌های سرد، ترکیب‌بندی ایستا).' },
+          { id: 'meditative', name: 'مراقبه‌ای (Meditative)', desc: 'حس درون‌گرایی، خلوت، تمرکز درونی. (نور ملایم، سوژه در حال تفکر، فضای خالی زیاد).' },
+        ]
+      },
+      {
+        id: 'texture_material',
+        category: '۲۱. بافت و متریال (Texture & Material)',
+        icon: '🧶',
+        options: [
+          { id: 'raw_concrete', name: 'بتن خام (Raw Concrete)', desc: 'پس‌زمینه‌ای با بافت سرد، صنعتی و مینیمال بتن.' },
+          { id: 'polished_marble', name: 'سنگ مرمر صیقلی (Polished Marble)', desc: 'سطحی لوکس، صاف و براق با رگه‌های زیبای سنگ مرمر.' },
+          { id: 'natural_wood', name: 'بافت چوب طبیعی (Natural Wood Texture)', desc: 'حسی گرم، روستایی و ارگانیک با بافت برجسته چوب.' },
+          { id: 'silk_fabric', name: 'پارچه ابریشم (Silk Fabric)', desc: 'پس‌زمینه‌ای نرم، روان و لوکس با درخشش ملایم ابریشم.' },
+          { id: 'wrinkled_linen', name: 'پارچه کتان چروک (Wrinkled Linen Fabric)', desc: 'بافتی طبیعی، کژوال و راحت با حس و حال ارگانیک.' },
+          { id: 'brushed_metal', name: 'فلز برس خورده (Brushed Metal)', desc: 'سطحی مدرن و صنعتی با خطوط ظریف و مات فلز.' },
+          { id: 'glossy_plastic', name: 'پلاستیک براق (Glossy Plastic)', desc: 'سطحی صاف و براق با انعکاس‌های تند، مناسب برای محصولات مدرن.' },
+          { id: 'matte_rubber', name: 'لاستیک مات (Matte Rubber)', desc: 'سطحی مات و بدون انعکاس با حسی نرم و صنعتی.' },
+          { id: 'soft_wool', name: 'پشم نرم (Soft Wool)', desc: 'بافتی گرم، نرم و دنج، مناسب برای محصولات زمستانی یا راحتی.' },
+          { id: 'transparent_glass', name: 'شیشه شفاف (Transparent Glass)', desc: 'بازی با نور، انعکاس و انکسار از طریق شیشه.' },
+          { id: 'rippled_water', name: 'سطح آب مواج (Rippled Water Surface)', desc: 'ایجاد افکت‌های نوری پویا و انتزاعی با امواج آب.' },
+          { id: 'coarse_sand', name: 'شن درشت (Coarse Sand)', desc: 'بافتی طبیعی و ارگانیک، مناسب برای فضاهای ساحلی یا بیابانی.' },
+          { id: 'cracked_earth', name: 'زمین ترک خورده (Cracked Earth)', desc: 'بافتی دراماتیک و ارگانیک که حس خشکی و طبیعت را القا می‌کند.' },
+          { id: 'fine_leather', name: 'چرم مرغوب (Fine Leather)', desc: 'بافتی کلاسیک، لوکس و مردانه با جزئیات دقیق.' },
+          { id: 'luxurious_velvet', name: 'مخمل مجلل (Luxurious Velvet)', desc: 'سطحی نرم، لوکس و عمیق که نور را جذب کرده و رنگ‌ها را غنی نشان می‌دهد.' },
+          { id: 'shiny_sequins', name: 'پولک‌های درخشان (Shiny Sequins)', desc: 'سطحی پر از پولک‌های براق برای ایجاد حسی شاد، فانتزی یا مجلسی.' },
+          { id: 'terrazzo_pattern', name: 'طرح تراتزو (Terrazzo Pattern)', desc: 'الگویی متشکل از تکه‌های سنگ و مرمر در یک زمینه یکپارچه، سبکی مدرن و جذاب.' },
+          { id: 'corrugated_metal', name: 'ورق فلزی موج‌دار (Corrugated Metal Sheet)', desc: 'بافتی صنعتی و گرافیکی با خطوط و سایه‌های منظم.' },
+          { id: 'natural_slate', name: 'سنگ لوح طبیعی (Natural Slate Stone)', desc: 'سطحی تیره و مات با بافتی طبیعی و لایه‌لایه، مناسب برای فضاهای لوکس و روستیک.' },
+          { id: 'colored_transparent_resin', name: 'رزین شفاف رنگی (Colored Transparent Resin)', desc: 'متریالی شفاف و رنگی که نور را از خود عبور داده و افکت‌های زیبایی ایجاد می‌کند.' },
+          { id: 'raw_unexpected_materials', name: 'مواد خام و غیرمنتظره (Raw & Unexpected Materials)', desc: 'استفاده از مواد اولیه و خام محصول به شکلی هنری و غیرمنتظره در چیدمان.' },
+        ]
+      },
+      {
+        id: 'podiums_stands',
+        category: '۲۲. پودیوم و پایه (Podiums & Stands)',
+        icon: '🏛️',
+        options: [
+          { id: 'cylindrical_podium', name: 'پودیوم استوانه‌ای (Cylindrical Podium)', desc: 'پایه استوانه‌ای شکل برای نمایش محصول، مناسب برای ایجاد ارتفاع و تمرکز.' },
+          { id: 'cubical_podium', name: 'پودیوم مکعبی (Cubical Podium)', desc: 'پایه مکعبی شکل، ایده‌آل برای ظاهری مینیمال و هندسی.' },
+          { id: 'stepped_podium', name: 'پودیوم پلکانی (Stepped Podium)', desc: 'پایه‌هایی با ارتفاع‌های مختلف برای نمایش گروهی محصولات.' },
+          { id: 'marble_podium', name: 'پودیوم مرمر (Marble Podium)', desc: 'پایه ساخته شده از سنگ مرمر برای حسی لوکس و کلاسیک.' },
+          { id: 'concrete_podium', name: 'پودیوم بتنی (Concrete Podium)', desc: 'پایه بتنی برای ظاهری صنعتی، مدرن و مینیمال.' },
+          { id: 'glass_podium', name: 'پودیوم شیشه‌ای (Glass Podium)', desc: 'پایه شفاف شیشه‌ای یا اکریلیک برای ایجاد حس سبکی و معلق بودن.' },
+          { id: 'raw_wood_podium', name: 'پودیوم چوبی خام (Raw Wood Podium)', desc: 'پایه ساخته شده از چوب طبیعی و پرداخت نشده برای حسی ارگانیک و روستیک.' },
+          { id: 'arched_podium', name: 'پودیوم طاق‌دار/قوسی (Arched Podium)', desc: 'پایه‌هایی با فرم‌های قوسی و منحنی برای ظاهری نرم و معماری‌گونه.' },
+          { id: 'abstract_geometric_podium', name: 'پودیوم هندسی انتزاعی (Abstract Geometric Podium)', desc: 'پایه‌هایی با اشکال غیرمعمول و هندسی برای یک صحنه خلاقانه.' },
+          { id: 'podium_riser', name: 'رایزر پودیوم (Podium Riser)', desc: 'استفاده از چندین پایه یا رایزر کوچک برای ایجاد اختلاف سطح.' },
+        ]
+      },
+      {
+        id: 'lighting',
+        category: '۲۳. نورپردازی استودیویی (Lighting)',
+        icon: '💡',
+        options: [
+          { id: 'natural_daylight', name: 'نور طبیعی روز (Natural Daylight)', desc: 'نور طبیعی روز، نرم و یکنواخت.' },
+          { id: 'studio_softbox', name: 'سافت‌باکس استودیویی (Studio Softbox)', desc: 'نور استودیویی کنترل‌شده با سایه‌های بسیار نرم.' },
+          { id: 'golden_hour', name: 'ساعت طلایی (Golden Hour)', desc: 'نور گرم و طلایی غروب خورشید.' },
+          { id: 'dark_atmospheric', name: 'تاریک و اتمسفریک (Dark & Atmospheric)', desc: 'استفاده از سایه‌های عمیق و نور کم برای ایجاد فضایی مرموز و لوکس.' },
+          { id: 'high_key_studio', name: 'استودیویی پرنور (High-Key Studio)', desc: 'پس‌زمینه کاملاً سفید و نورپردازی شدید برای حذف سایه‌ها.' },
+          { id: 'low_key_studio', name: 'استودیویی کم‌نور (Low-Key Studio)', desc: 'پس‌زمینه تیره و نورپردازی متمرکز برای برجسته کردن محصول.' },
+          { id: 'neon_lights', name: 'نورهای نئونی (Neon Lights)', desc: 'نورپردازی با چراغ‌های نئونی رنگارنگ.' },
+          { id: 'hard_shadow', name: 'سایه سخت (Hard Shadow)', desc: 'ایجاد سایه‌های تند و تیز با یک منبع نور مستقیم.' },
+          { id: 'backlight', name: 'نور از پشت (Backlight)', desc: 'منبع نور در پشت محصول قرار می‌گیرد و هاله‌ای نورانی ایجاد می‌کند.' },
+          { id: 'rim_lighting', name: 'نورپردازی لبه (Rim Lighting)', desc: 'نوری که لبه‌های محصول را روشن کرده و آن را از پس‌زمینه جدا می‌کند.' },
+          { id: 'window_light', name: 'نور پنجره (Window Light)', desc: 'استفاده از نور طبیعی و نرمی که از یک پنجره به داخل می‌تابد.' },
+        ]
+      },
+      {
+        id: 'camera_angle',
+        category: '۲۴. زاویه دوربین (Camera Angle)',
+        icon: '📐',
+        options: [
+          { id: 'product_level_view', name: 'نمای هم‌سطح محصول (Product-Level View)', desc: 'دوربین دقیقاً در سطح محصول قرار می‌گیرد، مناسب برای اشیاء روی میز یا زمین.' },
+          { id: 'eye_level_view', name: 'هم‌سطح چشم (Eye-Level View)', desc: 'عکاسی از زاویه هم‌سطح با چشم.' },
+          { id: 'low_angle_view', name: 'زاویه پایین (Low-Angle View)', desc: 'عکاسی از زاویه پایین به بالا برای ایجاد حس قدرت.' },
+          { id: 'high_angle_view', name: 'زاویه بالا (High-Angle View)', desc: 'عکاسی از زاویه بالا به پایین.' },
+          { id: 'birds_eye_view', name: 'نمای پرنده / از بالا (Bird\'s-Eye View / Top-Down)', desc: 'عکاسی از زاویه کاملاً عمود از بالا.' },
+          { id: 'flat_lay_view', name: 'نمای فلت لی (Flat Lay View)', desc: 'زاویه کاملاً عمود از بالا برای چیدمان تخت اشیاء روی یک سطح.' },
+          { id: 'close_up_view', name: 'نمای بسته (Close-up View)', desc: 'نمای نزدیک برای نمایش بخشی از محصول و جزئیات آن.' },
+          { id: 'macro_view', name: 'نمای ماکرو (Macro View)', desc: 'نمای بسیار نزدیک برای ثبت جزئیات بسیار ریز و بافت.' },
+          { id: 'dutch_angle', name: 'زاویه هلندی (Dutch Angle)', desc: 'کج کردن دوربین برای ایجاد حس تنش یا پویایی.' },
+        ]
+      },
+      {
+        id: 'creative_mega_prompts',
+        category: '۲۵. مگا پرامپت خلاقانه (Creative Mega Prompts)',
+        icon: '🚀',
+        options: [
+          { id: 'product_in_hand_normal', name: 'محصول در دست حالت معمولی (Product In Hand)', desc: 'مدل سوژه را به سمت دوربین نشان می‌دهد و به گونه‌ای است که انگار در حال معرفی محصول است.' },
+          { id: 'product_in_hand_pro', name: 'محصول در دست به صورت حرفه‌ای (Product In Hand Pro)', desc: 'عکس تبلیغاتی ادیتوریال فوق‌واقعی با دست کشیده شده رو به دوربین، فوکوس پین‌شارپ روی محصول و بوکه با لنز تله ۲۰۰ میلی‌متری.' },
+          { id: 'product_on_hand', name: 'محصول روی کف دست (Product on Hand)', desc: 'محصول روی کف دست باز مدل آرام گرفته و با نورپردازی طبیعی استودیویی و پس‌زمینه محو نرم به نمایش درآمده است.' },
+          { id: 'floating_surreal_nature', name: 'محصول معلق در میان طبیعت سورئال (Floating in Surreal Nature)', desc: 'محصول در هوا میان منظره‌ای جادویی، مه ملایم و نورپردازی نرم به صورت معلق شناور است.' },
+          { id: 'minimal_industrial_shadows', name: 'شات صنعتی مینیمال با سایه‌های گرافیکی', desc: 'سطح بتنی خشن با نور مستقیم تیز و سایه‌های بلند کشیده و هندسی برای استایلی مدرن و معمارانه.' },
+          { id: 'color_powder_explosion', name: 'محصول در انفجار رنگ و پودر (Powder Explosion)', desc: 'ثبت لحظه پرتاب پودرهای رنگی فریز شده در هوا با نورپردازی پرکنتراست در اطراف کالا.' },
+          { id: 'product_water_reflections', name: 'محصول در آب با انعکاس‌های زیبا', desc: 'محصول نیمه‌غوطه‌ور در آبی زلال با بازتاب‌های آینه‌ای کریستالی و اتمسفر لوکس و آرامش‌بخش.' },
+          { id: 'classic_luxury_scene', name: 'صحنه لوکس و کلاسیک (Classic Luxury)', desc: 'چیدمان با مخمل مرغوب، چوب تیره گردو، نور گرم شمع و فضایی مجلل و اشرافی.' },
+        ]
+      }
+    ];
+
+    const ALL_STYLES = CATEGORIZED_GALLERY.flatMap(cat => cat.options);
+
+    const MODAL_TABS = [
+      { name: 'سبک عکاسی عمومی', icon: '📸', categories: ['general_studio', 'action_dynamic', 'apparel', 'fashion_accessories', 'cosmetics_beauty', 'electronics_appliances', 'food_beverage', 'kids_baby', 'jewelry_beauty', 'creative_graphic'] },
+      { name: 'فضا و محیط', icon: '🌳', categories: ['iranian_spaces', 'environmental_styles', 'industrial_workshop', 'texture_wall_studio', 'occasions_themes', 'seasons_weather', 'indoor_environments', 'outdoor_nature', 'decorative_arrangement', 'mood_atmosphere'] },
+      { name: 'اکسسوری و دکور', icon: '🌂', categories: ['texture_material', 'podiums_stands'] },
+      { name: 'نورپردازی و زاویه', icon: '💡', categories: ['lighting', 'camera_angle'] },
+      { name: 'مگا پرامپت خلاقانه', icon: '🚀', categories: ['creative_mega_prompts'] }
+    ];
+
+    const PRODUCT_SCALES = [
+      { id: 'normal', name: 'اندازه واقعی و استاندارد کالا' },
+      { id: 'tiny', name: 'بسیار کوچک (مثل انگشتر یا عطر جیبی)' },
+      { id: 'handheld', name: 'اندازه دستی (مثل موبایل یا ماگ)' },
+      { id: 'medium', name: 'اندازه متوسط (مثل کیف دستی یا کفش)' },
+      { id: 'large', name: 'بزرگ (مثل چمدان یا مبلمان)' }
+    ];
+
+    const ASPECT_RATIOS = [
+      { id: '1:1', label: '1:1 (مربع اینستاگرام / وب‌سایت)' },
+      { id: '3:4', label: '3:4 (عمودی استاندارد)' },
+      { id: '4:3', label: '4:3 (افقی استاندارد)' },
+      { id: '4:5', label: '4:5 (پرتره اینستاگرام)' },
+      { id: '16:9', label: '16:9 (عریض افقی)' },
+      { id: '9:16', label: '9:16 (استوری و ریلز)' }
+    ];
+
+    function App() {
+      const fileInputRef = useRef(null);
+      const cameraInputRef = useRef(null);
+
+      // Empty API key as required by Canvas environment - automatically injected at runtime
+      const apiKey = ""; 
+
+      const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
+      const [modalSearch, setModalSearch] = useState('');
+      const [activeModalTab, setActiveModalTab] = useState(0);
+
+      const [activeInfoStyle, setActiveInfoStyle] = useState(null);
+
+      const [productImages, setProductImages] = useState([]);
+      const [productCategoryType, setProductCategoryType] = useState('auto');
+      const [customProductName, setCustomProductName] = useState('');
+      const [isAnalyzing, setIsAnalyzing] = useState(false);
+      const [analysisIdeas, setAnalysisIdeas] = useState([]);
+
+      const [generatedPrompt, setGeneratedPrompt] = useState('');
+      const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+
+      const [renderedImage, setRenderedImage] = useState(null);
+      const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+      const [toastMessage, setToastMessage] = useState('');
+      const [showToast, setShowToast] = useState(false);
+      const [copySuccess, setCopySuccess] = useState(false);
+
+      const [isRetouching, setIsRetouching] = useState(false);
+
+      const [selectedStyles, setSelectedStyles] = useState([]);
+      const [productScale, setProductScale] = useState('normal');
+      const [customDescription, setCustomDescription] = useState('');
+      
+      const [aspectRatio, setAspectRatio] = useState('1:1');
+      const [promptLanguage, setPromptLanguage] = useState('fa');
+      const [promptDetailLevel, setPromptDetailLevel] = useState('advanced');
+      
+      const [includeHumanModel, setIncludeHumanModel] = useState(false);
+      const [includeAccessories, setIncludeAccessories] = useState(true);
+      const [iranianModelSetting, setIranianModelSetting] = useState('any');
+      
+      const [selectedPromptModel, setSelectedPromptModel] = useState('gemini-3-flash-preview');
+      const [selectedImageModel, setSelectedImageModel] = useState('gemini-3.1-flash-image');
+
+      const [preserveShape, setPreserveShape] = useState(false);
+      const [preserveAngle, setPreserveAngle] = useState(false);
+      const [consistencyLock, setConsistencyLock] = useState(true);
+      const [fixedSeed, setFixedSeed] = useState(1042);
+
+      const triggerToast = (msg) => {
+        setToastMessage(msg);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 4000);
+      };
+
+      const toggleStyleSelection = (styleId) => {
+        setSelectedStyles(prev => {
+          if (prev.includes(styleId)) {
+            return prev.filter(id => id !== styleId);
+          } else {
+            return [...prev, styleId];
+          }
+        });
+      };
+
+      const resetAllSettings = () => {
+        setProductImages([]);
+        setProductCategoryType('auto');
+        setCustomProductName('');
+        setSelectedStyles([]);
+        setProductScale('normal');
+        setCustomDescription('');
+        setAspectRatio('1:1');
+        setPromptLanguage('fa');
+        setPromptDetailLevel('advanced');
+        setIncludeHumanModel(false);
+        setIncludeAccessories(true);
+        setIranianModelSetting('any');
+        setGeneratedPrompt('');
+        setRenderedImage(null);
+        setAnalysisIdeas([]);
+        triggerToast('تمام تنظیمات و تصاویر بازنشانی شدند.');
+      };
+
+      const copyToClipboard = (text) => {
+        if (!text) return;
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          triggerToast('متن در حافظه کپی شد.');
+        } catch {
+          triggerToast('خطا در کپی متن.');
+        }
+      };
+
+      const downloadImageInBrowser = (dataUrl) => {
+        if (!dataUrl) return;
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `smartshot-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        triggerToast('تصویر با موفقیت در پوشه دانلود / گالری ذخیره شد.');
+      };
+
+      const callGeminiWithRetry = async (url, payload, retries = 3, delay = 1000) => {
+        for (let i = 0; i < retries; i++) {
+          try {
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (res.status === 429 && i < retries - 1) {
+              await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
+              continue;
+            }
+            if (!res.ok) {
+              const errText = await res.text();
+              throw new Error(`خطای ارتباط با هوش مصنوعی (${res.status}): ${errText}`);
+            }
+            return await res.json();
+          } catch (err) {
+            if (i === retries - 1) throw err;
+            await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
+          }
+        }
+      };
+
+      const handleImageUpload = (e) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+
+        files.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            setProductImages(prev => {
+              if (prev.length >= 3) return prev;
+              return [...prev, evt.target.result];
+            });
+          };
+          reader.readAsDataURL(file);
+        });
+        e.target.value = '';
+      };
+
+      const removeProductImage = (index) => {
+        setProductImages(prev => prev.filter((_, i) => i !== index));
+      };
+
+      const autoSelectSmartStyle = async () => {
+        if (!productImages.length) {
+          triggerToast('لطفاً ابتدا تصویر محصول را آپلود کنید.');
+          return;
+        }
+        setIsAnalyzing(true);
+        try {
+          const base64Data = productImages[0].split(',')[1];
+          const availableStyles = CATEGORIZED_GALLERY
+            .filter(cat => cat.id !== 'creative_mega_prompts')
+            .flatMap(cat => cat.options);
+          const styleListStr = availableStyles.map(s => `id: "${s.id}" (${s.name})`).join('\n');
+
+          const payload = {
+            contents: [{
+              role: "user",
+              parts: [
+                { text: `این تصویر را بررسی کن. نام دقیق و نوع کالا را به صورت بسیار مختصر (حداکثر ۲ یا ۳ کلمه) مشخص کن. سپس ۳ الی ۵ سبک مناسب از لیست زیر برای عکاسی استودیویی انتخاب کن.\nلیست سبک‌ها:\n${styleListStr}\nپاسخ را فقط به صورت JSON با ساختار {"detectedName": "نام کالا", "selectedStyles": ["id1", "id2"]} بفرست.` },
+                { inlineData: { mimeType: "image/png", data: base64Data } }
+              ]
+            }]
+          };
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+          const data = await callGeminiWithRetry(apiUrl, payload);
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            const match = text.match(/\{[\s\S]*\}/);
+            if (match) {
+              const parsed = JSON.parse(match[0]);
+              if (parsed.detectedName) setCustomProductName(parsed.detectedName);
+              if (Array.isArray(parsed.selectedStyles) && parsed.selectedStyles.length > 0) {
+                const valid = parsed.selectedStyles.filter(id => ALL_STYLES.some(s => s.id === id));
+                if (valid.length > 0) setSelectedStyles(valid);
+              }
+              triggerToast('کالا و سبک‌های متناسب تشخیص داده شدند!');
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          triggerToast(err.message || 'خطا در ارتباط با هوش مصنوعی.');
+        } finally {
+          setIsAnalyzing(false);
+        }
+      };
+
+      const analyzeProductSpatialIdeas = async () => {
+        if (!productImages.length) {
+          triggerToast('لطفاً عکس محصول را آپلود کنید.');
+          return;
+        }
+        setIsAnalyzing(true);
+        setAnalysisIdeas([]);
+
+        const base64Data = productImages[0].split(',')[1];
+        let modelDirective = includeHumanModel ? "یک مدل انسانی متناسب با محصول در صحنه حضور داشته باشد." : "بدون حضور مدل انسانی.";
+        let accessoryDirective = includeAccessories ? "همراه با اکسسوری‌های مینیمال مرتبط." : "بدون اکسسوری اضافه.";
+
+        const systemPrompt = `تو کارگردان عکاسی تبلیغاتی هستی. این کالا را بررسی کن و ۲ ایده سناریو فضاسازی عکاسی شیک ارائه بده.\nمدل: ${modelDirective}\nاکسسوری: ${accessoryDirective}\nخروجی فقط ۲ خط تیتروار باشد.`;
+
+        const payload = {
+          contents: [{
+            role: "user",
+            parts: [
+              { text: "۲ ایده عکاسی استودیویی تیتروار بنویس." },
+              { inlineData: { mimeType: "image/png", data: base64Data } }
+            ]
+          }],
+          systemInstruction: { parts: [{ text: systemPrompt }] }
+        };
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+        try {
+          const data = await callGeminiWithRetry(apiUrl, payload);
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            const lines = text.split('\n').map(l => l.replace(/^[*\-•\d.]+\s*/, '').trim()).filter(l => l.length > 10);
+            setAnalysisIdeas(lines.slice(0, 2));
+            triggerToast('۲ ایده فضاسازی استخراج شد.');
+          }
+        } catch (error) {
+          console.error(error);
+          triggerToast(error.message || 'خطا در آنالیز تصویر.');
+        } finally {
+          setIsAnalyzing(false);
+        }
+      };
+
+      const generateMegaPrompt = async () => {
+        setIsGeneratingPrompt(true);
+        const selectedStyleObjs = ALL_STYLES.filter(s => selectedStyles.includes(s.id));
+        const styleText = selectedStyleObjs.map(s => `${s.name}: ${s.desc}`).join(' | ') || "سبک مینیمال استودیویی مدرن";
+        const scaleObj = PRODUCT_SCALES.find(s => s.id === productScale);
+
+        const mandatoryPreservationText = "حفظ کامل متریال، بافت، رنگ، جزئیات بسته‌بندی، متون و لوگوهای محصول اصلی. هوش مصنوعی مجاز است فرم، انحنا، زاویه و نحوه قرارگیری کالا (مثلاً گرد شدن فرم دستبند یا تا خوردگی لباس) را برای طبیعی‌تر شدن در صحنه جدید تطبیق دهد. هرگونه متن یا لوگوی اضافی در پس‌زمینه باید حذف شود";
+
+        const consistencyDirective = consistencyLock 
+          ? `\n[تثبیت هندسه و تقارن دکور برای تکرارپذیری ۱۰۰٪]: چیدمان دکور، زاویه دوربین، موقعیت کالا (دقیقاً در مرکز با مختصات ثابت X:50%, Y:50%)، زاویه نور اصلی (۴۵ درجه چپ، ۵۶۰۰ کلوین) و فواصل دقیق المان‌های پس‌زمینه را فیکس کن.`
+          : '';
+
+        const promptInstructions = `
+نگارش مگاپرامپت عکاسی تبلیغاتی تجاری فوق‌العاده باکیفیت به زبان ${promptLanguage === 'fa' ? 'فارسی' : 'انگلیسی'}.
+۱. عبارت آغازین الزامی: "${mandatoryPreservationText}"
+۲. نام کالا: "${customProductName || 'کالای نمایش داده شده در تصویر'}"
+۳. سبک‌های انتخابی: ${styleText}
+۴. نسبت ابعاد: ${aspectRatio}، مقیاس: ${scaleObj?.name}${consistencyDirective}
+۵. توضیحات اضافه: ${customDescription || "محصول اصلی در مرکز کادر"}
+۶. قانون نور: هیچ سافت‌باکس یا پایه نوری در کادر دیده نشود، فقط بازتاب زیبای نور بر محصول باشد.
+`;
+
+        const payload = {
+          contents: [{
+            parts: [{ text: promptInstructions }],
+            ...(productImages.length > 0 ? [{ inlineData: { mimeType: "image/png", data: productImages[0].split(',')[1] } }] : [])
+          }]
+        };
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedPromptModel}:generateContent?key=${apiKey}`;
+
+        try {
+          const data = await callGeminiWithRetry(apiUrl, payload);
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            setGeneratedPrompt(text.trim());
+            triggerToast('پرامپت اختصاصی ساخته شد!');
+          }
+        } catch (error) {
+          console.error(error);
+          triggerToast(error.message || 'خطا در ساخت پرامپت.');
+        } finally {
+          setIsGeneratingPrompt(false);
+        }
+      };
+
+      const generateProductVisual = async () => {
+        if (!generatedPrompt) {
+          triggerToast('ابتدا پرامپت را تولید کنید.');
+          return;
+        }
+        if (!productImages.length) {
+          triggerToast('عکس محصول الزامی است.');
+          return;
+        }
+
+        setIsGeneratingImage(true);
+        setRenderedImage(null);
+
+        try {
+          const base64Data = productImages[0].split(',')[1];
+          const shapeDirective = preserveShape 
+            ? "Keep the exact physical shape and bending of the product exactly as it appears in the input image." 
+            : "You are explicitly allowed to adjust the physical posture, bending, or shape of the product (e.g., curving a bracelet naturally) so it sits realistically in the scene.";
+          
+          const angleDirective = preserveAngle 
+            ? "Keep the exact camera angle and perspective of the product exactly as it appears in the input image." 
+            : "You are free to choose the most flattering camera angle and perspective for the product.";
+
+          const consistencyAnchor = consistencyLock 
+            ? `[DETERMINISTIC COMPOSITION LOCK]: Seed ${fixedSeed}. Maintain exact spatial coordinates, fixed prop arrangements, exact pedestal height, and exact lighting setup.` 
+            : "";
+
+          const payload = {
+            contents: [{
+              role: "user",
+              parts: [
+                { text: `[STRICT MANDATE FOR ASPECT RATIO: EXACTLY ${aspectRatio}]. Ultra-high 8K fidelity commercial studio photo render. Commercial advertisement photo composition in ${aspectRatio}. CRITICAL MANDATE 1: Keep the original product labels, exact text, logos, packaging, materials, and colors 100% untouched. ${shapeDirective} ${angleDirective} ${consistencyAnchor} CRITICAL MANDATE 2: Softboxes and physical lighting fixtures or stands MUST NEVER be visible inside the frame. Details: ${generatedPrompt}` },
+                { inlineData: { mimeType: "image/png", data: base64Data } }
+              ]
+            }],
+            generationConfig: {
+              responseModalities: ['TEXT', 'IMAGE'],
+              ...(aspectRatio ? { imageConfig: { aspectRatio: aspectRatio } } : {})
+            }
+          };
+
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedImageModel}:generateContent?key=${apiKey}`;
+          const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const errBody = await res.text();
+            throw new Error(`خطای رندر (${res.status}): ${errBody}`);
+          }
+          const data = await res.json();
+          const imagePart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+          if (imagePart?.inlineData?.data) {
+            setRenderedImage(`data:${imagePart.inlineData.mimeType || 'image/png'};base64,${imagePart.inlineData.data}`);
+            triggerToast('✨ تصویر با کیفیت عالی ساخته شد!');
+          } else {
+            throw new Error('تصویری در پاسخ دریافت نشد.');
+          }
+        } catch (error) {
+          console.error(error);
+          triggerToast(error.message || 'خطا در تولید تصویر.');
+        } finally {
+          setIsGeneratingImage(false);
+        }
+      };
+
+      const runProductRetouch = async () => {
+        if (!productImages.length) {
+          triggerToast('ابتدا تصویر کالا را آپلود کنید.');
+          return;
+        }
+
+        setIsRetouching(true);
+        setRenderedImage(null);
+
+        try {
+          const base64Data = productImages[0].split(',')[1];
+          const retouchPrompt = `A clean, professional e-commerce product catalog shot of the item shown in the input image. Direct eye-level front view angle. Pure seamless white background (#FFFFFF) suitable for website and marketplace listing. CRITICAL MANDATE 1: Maintain 100% precision of the product packaging, texts, fonts, logos, colors, and all brand details with ZERO alterations. CRITICAL MANDATE 2: Studio softbox lighting effect, but NO physical softboxes or lamps visible in the frame.`;
+
+          const payload = {
+            contents: [{
+              role: "user",
+              parts: [
+                { text: retouchPrompt },
+                { inlineData: { mimeType: "image/png", data: base64Data } }
+              ]
+            }],
+            generationConfig: {
+              responseModalities: ['TEXT', 'IMAGE']
+            }
+          };
+
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+          const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const errBody = await res.text();
+            throw new Error(`خطای روتوش (${res.status}): ${errBody}`);
+          }
+          const data = await res.json();
+          const imagePart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+          if (imagePart?.inlineData?.data) {
+            setRenderedImage(`data:${imagePart.inlineData.mimeType || 'image/png'};base64,${imagePart.inlineData.data}`);
+            triggerToast('✨ روتوش پس‌زمینه سفید با موفقیت انجام شد!');
+          } else {
+            throw new Error('تصویری در پاسخ روتوش دریافت نشد.');
+          }
+        } catch (err) {
+          console.error(err);
+          triggerToast(err.message || 'خطا در روتوش.');
+        } finally {
+          setIsRetouching(false);
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-['Vazirmatn',sans-serif]">
+          {/* Header */}
+          <header className="border-b border-slate-800 bg-slate-900/95 px-3 py-2.5 sm:px-4 sm:py-3 transition-all">
+            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 sm:p-2 bg-gradient-to-tr from-amber-500 to-rose-500 rounded-lg text-white shadow-md">
+                  <Icon name="camera" className="w-5 h-5" />
+                </div>
+                <div>
+                  <h1 className="text-xs sm:text-base font-black bg-gradient-to-l from-amber-200 via-rose-300 to-rose-400 bg-clip-text text-transparent leading-tight">
+                    SmartShot | استودیوی عکاسی محصول تحت وب
+                  </h1>
+                  <span className="text-[10px] text-slate-400">اتصال خودکار به هوش مصنوعی</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <button
+                  onClick={runProductRetouch}
+                  disabled={isRetouching || isGeneratingImage}
+                  className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1 shadow-md transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isRetouching ? <Icon name="refresh" className="w-3.5 h-3.5 animate-spin" /> : <Icon name="sparkles" className="w-3.5 h-3.5" />}
+                  <span>{isRetouching ? 'روتوش...' : '✨ عکس سفید (وب‌سایت)'}</span>
+                </button>
+
+                <button
+                  onClick={resetAllSettings}
+                  className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold flex items-center gap-1 border border-slate-700 cursor-pointer"
+                >
+                  <Icon name="rotate" className="w-3 h-3 text-rose-400" />
+                  <span>ریست</span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Left Column: Settings & Controls */}
+            <div className="lg:col-span-8 space-y-5">
+              
+              {/* Section 1: Product Photos */}
+              <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                  <h3 className="font-bold text-xs sm:text-sm flex items-center gap-2 text-amber-400">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    ۱. تصویر کالا و تعیین مشخصات
+                  </h3>
+                  <span className="text-[11px] text-slate-400">{productImages.length} از ۳ تصویر</span>
+                </div>
+
+                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-850 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-amber-300 font-bold flex items-center gap-1">
+                      <Icon name="image" className="w-4 h-4 text-amber-400" />
+                      افزودن عکس:
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {productImages.map((img, idx) => (
+                        <div key={idx} className="relative w-9 h-9 rounded-lg bg-slate-900 border border-amber-500/30 overflow-hidden p-0.5 group">
+                          <img src={img} alt={`محصول ${idx + 1}`} className="w-full h-full object-contain" />
+                          <button
+                            onClick={() => removeProductImage(idx)}
+                            className="absolute inset-0 bg-rose-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Icon name="trash" className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {productImages.length < 3 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1.5 border border-slate-700 cursor-pointer"
+                      >
+                        <Icon name="plus" className="w-3.5 h-3.5 text-amber-400" />
+                        <span>گالری عکس</span>
+                      </button>
+
+                      <button
+                        onClick={() => cameraInputRef.current?.click()}
+                        className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 rounded-lg text-xs font-black flex items-center gap-1.5 shadow-md cursor-pointer"
+                      >
+                        <Icon name="camera" className="w-3.5 h-3.5" />
+                        <span>عکاسی با دوربین</span>
+                      </button>
+                    </div>
+                  )}
+
+                  <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" multiple />
+                  <input type="file" ref={cameraInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" capture="environment" />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-stretch">
+                  <div className="sm:col-span-6 bg-slate-950 border border-slate-800 rounded-xl p-2 min-h-[190px] flex flex-col items-center justify-center relative">
+                    {productImages.length > 0 ? (
+                      <img src={productImages[0]} alt="کالای اصلی" className="max-h-48 max-w-full object-contain" />
+                    ) : (
+                      <div className="text-center space-y-2 text-slate-500 py-6">
+                        <Icon name="image" className="w-8 h-8 mx-auto opacity-30 text-amber-400" />
+                        <p className="text-xs">عکسی اضافه نشده است</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="sm:col-span-6 space-y-2 flex flex-col justify-between">
+                    <button
+                      onClick={autoSelectSmartStyle}
+                      disabled={!productImages.length || isAnalyzing}
+                      className="w-full p-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-800 text-slate-950 disabled:text-slate-500 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                    >
+                      <Icon name="sparkles" className="w-3.5 h-3.5" />
+                      تشخیص هوشمند کالا و سبک
+                    </button>
+
+                    <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1">
+                      <label className="text-[11px] font-bold text-amber-300 flex items-center gap-1">
+                        <Icon name="tag" className="w-3.5 h-3.5" />
+                        نوع و نام دقیق محصول:
+                      </label>
+                      <input
+                        type="text"
+                        value={customProductName}
+                        onChange={(e) => setCustomProductName(e.target.value)}
+                        placeholder="مثلاً: عطر مردانه، دستبند طلا..."
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-amber-500"
+                      />
+                    </div>
+
+                    <button
+                      onClick={analyzeProductSpatialIdeas}
+                      disabled={!productImages.length || isAnalyzing}
+                      className="w-full p-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 border border-slate-700 cursor-pointer"
+                    >
+                      {isAnalyzing ? <Icon name="refresh" className="w-3.5 h-3.5 animate-spin" /> : <Icon name="lightbulb" className="w-3.5 h-3.5 text-amber-400" />}
+                      آنالیز و پیشنهاد ۲ ایده فضا
+                    </button>
+                  </div>
+                </div>
+
+                {analysisIdeas.length > 0 && (
+                  <div className="pt-2 border-t border-slate-800 space-y-1.5">
+                    <span className="text-xs font-bold text-amber-400 block">ایده‌های فضاسازی پیشنهادی:</span>
+                    {analysisIdeas.map((idea, idx) => (
+                      <div key={idx} className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                        <p className="text-xs text-slate-300 leading-relaxed flex-1">{idea}</p>
+                        <button
+                          onClick={() => {
+                            setCustomDescription(idea);
+                            triggerToast('ایده به توضیحات منتقل شد.');
+                          }}
+                          className="px-2 py-1 bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 rounded-lg text-[10px] font-bold cursor-pointer"
+                        >
+                          ➕ اعمال در صحنه
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <h3 className="font-bold text-xs sm:text-sm text-amber-400 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    ۲. دکور، زاویه و پارامترهای دوربین
+                  </h3>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsStyleModalOpen(true)}
+                      className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer"
+                    >
+                      <Icon name="sliders" className="w-3.5 h-3.5" />
+                      گالری سبک‌ها ({selectedStyles.length})
+                    </button>
+                  </div>
+                </div>
+
+                {selectedStyles.length > 0 && (
+                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-wrap gap-1.5">
+                    {selectedStyles.map(stId => {
+                      const st = ALL_STYLES.find(s => s.id === stId);
+                      if (!st) return null;
+                      return (
+                        <span key={st.id} className="bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs px-2.5 py-1 rounded-lg flex items-center gap-1">
+                          <span>{st.name}</span>
+                          <button onClick={() => toggleStyleSelection(st.id)} className="hover:text-rose-400 cursor-pointer">
+                            <Icon name="close" className="w-3 h-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-300">نسبت ابعاد کادر:</label>
+                    <select
+                      value={aspectRatio}
+                      onChange={(e) => setAspectRatio(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-amber-300 font-bold outline-none cursor-pointer"
+                    >
+                      {ASPECT_RATIOS.map(r => <option key={r.id} value={r.id} className="bg-slate-900 text-slate-200">{r.label}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-300">مقیاس فیزیکی محصول:</label>
+                    <select
+                      value={productScale}
+                      onChange={(e) => setProductScale(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none cursor-pointer"
+                    >
+                      {PRODUCT_SCALES.map(s => <option key={s.id} value={s.id} className="bg-slate-900 text-slate-200">{s.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">توضیحات سفارشی شما برای دکور:</label>
+                  <textarea
+                    value={customDescription}
+                    onChange={(e) => setCustomDescription(e.target.value)}
+                    placeholder="مثلاً: محصول روی سنگ مرمر مشکی قرار گرفته و چند قطره آب در کنار آن است..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 focus:border-amber-500 outline-none h-16 resize-none"
+                  />
+                </div>
+              </section>
+
+              <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800">
+                  <h3 className="font-bold text-xs sm:text-sm text-amber-400 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    ۳. ساخت پرامپت و رندر نهایی
+                  </h3>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setPromptLanguage(promptLanguage === 'fa' ? 'en' : 'fa')}
+                      className="px-2 py-1 bg-slate-950 border border-slate-800 text-[10px] font-bold text-amber-300 rounded-lg cursor-pointer"
+                    >
+                      زبان: {promptLanguage === 'fa' ? 'فارسی' : 'English'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  <button
+                    onClick={generateMegaPrompt}
+                    disabled={isGeneratingPrompt}
+                    className="w-full bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 text-slate-950 font-black py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer"
+                  >
+                    {isGeneratingPrompt ? <Icon name="refresh" className="w-4 h-4 animate-spin" /> : <Icon name="sparkles" className="w-4 h-4" />}
+                    <span>تولید پرامپت حرفه‌ای و مهندسی‌شده</span>
+                  </button>
+
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] text-amber-400 font-bold">پرامپت نهایی (قابل ویرایش دستی):</span>
+                      <button
+                        onClick={() => copyToClipboard(generatedPrompt)}
+                        className="text-xs text-slate-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer"
+                      >
+                        <Icon name="copy" className="w-3.5 h-3.5" />
+                        <span>کپی پرامپت</span>
+                      </button>
+                    </div>
+                    <textarea
+                      value={generatedPrompt}
+                      onChange={(e) => setGeneratedPrompt(e.target.value)}
+                      placeholder="متن پرامپت پس از تولید اینجا نمایش داده می‌شود یا می‌توانید دستی بنویسید..."
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 leading-relaxed outline-none h-28 resize-y"
+                    />
+                  </div>
+                </div>
+
+                {/* AI Model Controls and Precision Toggles */}
+                <div className="pt-2 border-t border-slate-800 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setSelectedImageModel('gemini-3.1-flash-image')}
+                      className={`p-2 rounded-xl border text-right transition-all cursor-pointer ${
+                        selectedImageModel === 'gemini-3.1-flash-image'
+                          ? 'border-amber-500 bg-amber-500/20 text-amber-300 font-bold'
+                          : 'border-slate-800 bg-slate-950 text-slate-400'
+                      }`}
+                    >
+                      <span className="text-xs block font-bold">Gemini 3.1 Flash Image</span>
+                      <span className="text-[10px] text-slate-400">کیفیت عالی و وفاداری به بافت و برند کالا</span>
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedImageModel('gemini-3.1-flash-lite-image')}
+                      className={`p-2 rounded-xl border text-right transition-all cursor-pointer ${
+                        selectedImageModel === 'gemini-3.1-flash-lite-image'
+                          ? 'border-amber-500 bg-amber-500/20 text-amber-300 font-bold'
+                          : 'border-slate-800 bg-slate-950 text-slate-400'
+                      }`}
+                    >
+                      <span className="text-xs block font-bold">Gemini 3.1 Flash Lite</span>
+                      <span className="text-[10px] text-slate-400">نسخه فوق‌سریع ۳.۱ لایت</span>
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedImageModel('gemini-2.5-flash-image-preview')}
+                      className={`p-2 rounded-xl border text-right transition-all cursor-pointer ${
+                        selectedImageModel === 'gemini-2.5-flash-image-preview'
+                          ? 'border-amber-500 bg-amber-500/20 text-amber-300 font-bold'
+                          : 'border-slate-800 bg-slate-950 text-slate-400'
+                      }`}
+                    >
+                      <span className="text-xs block font-bold">Gemini 2.5 Flash Image</span>
+                      <span className="text-[10px] text-slate-400">مدل استاندارد و پایدار ۲.۵</span>
+                    </button>
+                  </div>
+
+                  {/* Flexibility & Angle Switches */}
+                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-amber-300">
+                      <input
+                        type="checkbox"
+                        checked={consistencyLock}
+                        onChange={(e) => setConsistencyLock(e.target.checked)}
+                        className="rounded bg-slate-900 border-slate-700 text-emerald-500 w-4 h-4 cursor-pointer"
+                      />
+                      <div>
+                        <span className="font-bold text-slate-100 block">🔒 قفل ثبات بصری و تکرارپذیری</span>
+                        <span className="text-[10px] text-slate-400 block">اگر ۱۰ بار هم رندر بگیرید دکور و نور یکدست خواهند بود.</span>
+                      </div>
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-900">
+                      <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-amber-300">
+                        <input
+                          type="checkbox"
+                          checked={preserveShape}
+                          onChange={(e) => setPreserveShape(e.target.checked)}
+                          className="rounded bg-slate-900 border-slate-700 text-amber-500 w-3.5 h-3.5 cursor-pointer"
+                        />
+                        <span>حفظ دقیق فرم فیزیکی (مثل عکس ورودی)</span>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-amber-300">
+                        <input
+                          type="checkbox"
+                          checked={preserveAngle}
+                          onChange={(e) => setPreserveAngle(e.target.checked)}
+                          className="rounded bg-slate-900 border-slate-700 text-amber-500 w-3.5 h-3.5 cursor-pointer"
+                        />
+                        <span>حفظ دقیق زاویه دوربین اولیه</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={generateProductVisual}
+                    disabled={isGeneratingImage || (!generatedPrompt && !productImages.length)}
+                    className="w-full bg-slate-100 hover:bg-white disabled:bg-slate-900 disabled:text-slate-600 text-slate-950 font-black py-3 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-xl cursor-pointer"
+                  >
+                    {isGeneratingImage ? <Icon name="refresh" className="w-4 h-4 animate-spin" /> : <Icon name="camera" className="w-4 h-4" />}
+                    <span>{isGeneratingImage ? 'در حال رندر عکاسی استودیویی...' : 'رندر نهایی عکس محصول'}</span>
+                  </button>
+                </div>
+              </section>
+            </div>
+
+            <div className="lg:col-span-4 space-y-5">
+              <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+                <h3 className="font-bold text-xs sm:text-sm text-slate-200 flex items-center gap-1.5">
+                  <Icon name="eye" className="w-4 h-4 text-amber-500" />
+                  <span>پیش‌نمایش تصویر نهایی</span>
+                </h3>
+
+                <div className="relative aspect-square w-full bg-slate-950 rounded-xl overflow-hidden border border-slate-850 flex items-center justify-center">
+                  {isGeneratingImage || isRetouching ? (
+                    <div className="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center gap-3 text-center p-4">
+                      <div className="w-10 h-10 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
+                      <p className="text-xs font-bold text-amber-400 animate-pulse">
+                        {isRetouching ? 'در حال روتوش پس‌زمینه سفید...' : 'در حال تولید عکس با هوش مصنوعی...'}
+                      </p>
+                    </div>
+                  ) : renderedImage ? (
+                    <img src={renderedImage} alt="خروجی نهایی" className="w-full h-full object-contain" />
+                  ) : (
+                    <div className="text-center p-6 space-y-2">
+                      <Icon name="camera" className="w-10 h-10 text-slate-800 mx-auto" />
+                      <p className="text-xs text-slate-500">تصویر ساخته‌شده اینجا نمایش داده می‌شود</p>
+                    </div>
+                  )}
+                </div>
+
+                {renderedImage && (
+                  <div className="space-y-2.5 pt-1">
+                    <button
+                      onClick={() => downloadImageInBrowser(renderedImage)}
+                      className="w-full p-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-slate-950 font-black rounded-xl text-center text-xs flex items-center justify-center gap-2 shadow-xl cursor-pointer transition-all active:scale-95"
+                    >
+                      <Icon name="download" className="w-4 h-4" />
+                      <span>دانلود مستقیم تصویر در سیستم / گالری</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        copyToClipboard(renderedImage);
+                        setCopySuccess(true);
+                        setTimeout(() => setCopySuccess(false), 3000);
+                      }}
+                      className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 cursor-pointer"
+                    >
+                      {copySuccess ? <Icon name="check" className="w-3.5 h-3.5 text-emerald-400" /> : <Icon name="copy" className="w-3.5 h-3.5" />}
+                      <span>{copySuccess ? 'کپی شد!' : 'کپی پیوند Base64 تصویر'}</span>
+                    </button>
+                  </div>
+                )}
+              </section>
+            </div>
+          </main>
+
+          {isStyleModalOpen && (
+            <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-5">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+                <div className="p-3 sm:p-4 border-b border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Icon name="sliders" className="w-5 h-5 text-amber-400" />
+                    <h2 className="text-sm font-bold text-slate-100">گالری سبک‌های عکاسی استودیویی</h2>
+                  </div>
+                  <button onClick={() => setIsStyleModalOpen(false)} className="p-1 text-slate-400 hover:text-white cursor-pointer">
+                    <Icon name="close" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="bg-slate-950 p-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none border-b border-slate-800">
+                  {MODAL_TABS.map((tab, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveModalTab(idx)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                        activeModalTab === idx ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <span>{tab.icon} {tab.name}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="p-2 border-b border-slate-800">
+                  <input
+                    type="text"
+                    value={modalSearch}
+                    onChange={(e) => setModalSearch(e.target.value)}
+                    placeholder="جستجو در سبک‌ها..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {MODAL_TABS[activeModalTab].categories.map(catId => {
+                    const cat = CATEGORIZED_GALLERY.find(c => c.id === catId);
+                    if (!cat) return null;
+                    const filtered = cat.options.filter(o => o.name.includes(modalSearch) || o.desc.includes(modalSearch));
+                    if (!filtered.length) return null;
+
+                    return (
+                      <div key={cat.id} className="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
+                        <h4 className="text-xs font-bold text-amber-400">{cat.icon} {cat.category}</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                          {filtered.map(opt => {
+                            const isSelected = selectedStyles.includes(opt.id);
+                            return (
+                              <div
+                                key={opt.id}
+                                onClick={() => toggleStyleSelection(opt.id)}
+                                className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
+                                  isSelected
+                                    ? 'border-amber-500 bg-amber-500/20 text-amber-300 font-bold'
+                                    : 'border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700'
+                                }`}
+                              >
+                                <span className="text-xs block font-bold truncate">{opt.name}</span>
+                                <span className="text-[10px] text-slate-500 block truncate mt-1">{opt.desc}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="p-3 border-t border-slate-800 flex justify-between items-center bg-slate-900/95 sticky bottom-0">
+                  <button onClick={() => setSelectedStyles([])} className="text-xs text-rose-400 font-bold px-3 py-1.5 rounded-xl hover:bg-slate-800 cursor-pointer">پاکسازی</button>
+                  <button onClick={() => setIsStyleModalOpen(false)} className="px-5 py-2 bg-amber-500 hover:bg-amber-600 transition-colors text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 cursor-pointer">
+                    تایید انتخاب‌ها ({selectedStyles.length})
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showToast && (
+            <div className="fixed bottom-4 left-4 z-50 bg-slate-900 border border-amber-500/40 text-amber-200 px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2">
+              <Icon name="sparkles" className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <span className="text-xs font-semibold">{toastMessage}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
